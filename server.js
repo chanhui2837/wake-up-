@@ -88,6 +88,15 @@ app.post("/api/auth/login", needDb, async (req, res) => {
 
 app.get("/api/me", auth, (req, res) => res.json({ username: req.user.username }));
 
+// 회원 탈퇴: 계정 + 알람 + 알람음 모두 삭제
+app.delete("/api/me", auth, needDb, async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user || !(await bcrypt.compare(String((req.body && req.body.password) || ""), user.passwordHash)))
+    return res.status(401).json({ error: "비밀번호가 틀렸어요." });
+  await Promise.all([Alarm.deleteMany({ userId: user._id }), Sound.deleteMany({ userId: user._id }), User.deleteOne({ _id: user._id })]);
+  res.json({ ok: true });
+});
+
 /* ---------- 알람 ---------- */
 app.get("/api/alarms", auth, needDb, async (req, res) => {
   const list = await Alarm.find({ userId: req.user.id }).sort({ order: 1, time: 1 });
