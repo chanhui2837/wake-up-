@@ -1,0 +1,27 @@
+plugins { id "com.android.application" }
+
+android {
+    namespace "com.chanhui.wakeup"
+    compileSdk 34
+    defaultConfig {
+        applicationId "com.chanhui.wakeup"
+        minSdk 24
+        targetSdk 34
+        versionCode Integer.parseInt((project.findProperty("vc") ?: "1").toString())
+        versionName "1.0." + (project.findProperty("vc") ?: "1")
+    }
+    signingConfigs {
+        release {
+            storeFile file("wakeup.jks")
+            storePassword "wakeup1234"
+            keyAlias "wakeup"
+            keyPassword "wakeup1234"
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+        debug { signingConfig signingConfigs.release }
+    }
+    lint { checkReleaseBuilds false; abortOnError false }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
