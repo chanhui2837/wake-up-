@@ -183,7 +183,7 @@ const MISSIONS={
 const DAYN=["일","월","화","수","목","금","토"];
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 /* ================= 설정 / 계정 / 동기화 ================= */
-const REMOTE="https://wake-up-alarm.onrender.com";            // Render 주소
+const REMOTE="https://wake-up-alarm-lhkc.onrender.com";            // Render 주소
 const APK_URL="https://github.com/chanhui2837/wake-up-/releases/latest/download/wakeup-alarm.apk";
 const API=location.protocol.startsWith("http")?"":REMOTE;     // 앱(WebView)에서는 Render 서버로
 const NB=window.AndroidAlarm||null;                           // 안드로이드 앱 연결
