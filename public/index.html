@@ -2,386 +2,685 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#0f1222">
-<title>깨워알람 — 미션 알람</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F2A">
+<title>깨워알람 — 미션을 끝내야 꺼지는 알람</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-:root{--bg:#0f1222;--card:#1a1f38;--card2:#232a4a;--txt:#eef0ff;--sub:#9aa3c7;--acc:#ffb547;--acc2:#6c8cff;--ok:#3fd18b;--bad:#ff5c6c}
+:root{
+  --bg0:#070A1F;--bg1:#0B0F2A;--bg2:#141A3D;
+  --glass:rgba(255,255,255,.055);--glass2:rgba(255,255,255,.09);--line:rgba(255,255,255,.09);
+  --txt:#F4F2FF;--sub:#A5A9CF;--mute:#6E7399;
+  --sun1:#FFD36E;--sun2:#FF8A4C;--sun3:#FF4D8D;--sky:#7C9CFF;--mint:#3BE0A5;--red:#FF5470;
+  --grad:linear-gradient(135deg,#FFD36E 0%,#FF8A4C 45%,#FF4D8D 100%);
+  --grad-sky:linear-gradient(135deg,#8EA8FF,#6A5CFF);
+  --r:22px;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;overscroll-behavior:none}
-body{min-height:100vh;padding:16px 16px 100px;max-width:520px;margin:0 auto;user-select:none}
-h1{font-size:22px;margin:8px 0 4px}
-.sub{color:var(--sub);font-size:13px}
-button{font:inherit;border:0;border-radius:14px;padding:12px 16px;background:var(--card2);color:var(--txt);cursor:pointer}
-button.pri{background:var(--acc);color:#2a1a00;font-weight:700}
-button.blue{background:var(--acc2);color:#fff;font-weight:700}
-button.ghost{background:transparent;border:1px solid #39406a}
+html,body{margin:0;min-height:100%;background:var(--bg0);color:var(--txt);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{background:
+  radial-gradient(1200px 600px at 50% -10%,#2A1F63 0%,transparent 60%),
+  radial-gradient(800px 500px at 110% 110%,#4A1E52 0%,transparent 60%),
+  linear-gradient(180deg,var(--bg1),var(--bg0));background-attachment:fixed;user-select:none}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.55;background-image:
+  radial-gradient(1px 1px at 12% 18%,#fff8,transparent),radial-gradient(1px 1px at 72% 9%,#fff9,transparent),
+  radial-gradient(1.5px 1.5px at 85% 32%,#fff7,transparent),radial-gradient(1px 1px at 35% 42%,#fff5,transparent),
+  radial-gradient(1px 1px at 55% 22%,#fff6,transparent),radial-gradient(1.2px 1.2px at 22% 66%,#fff4,transparent),
+  radial-gradient(1px 1px at 92% 70%,#fff5,transparent),radial-gradient(1px 1px at 6% 88%,#fff4,transparent)}
+.wrap{max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(120px + env(safe-area-inset-bottom));position:relative}
+button{font:inherit;border:0;color:inherit;cursor:pointer;background:none;padding:0}
 button:active{transform:scale(.97)}
-.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0}
-.armed{display:flex;align-items:center;gap:10px;justify-content:space-between}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:inline-block;margin-right:6px}
-.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
-.alarm{display:flex;align-items:center;gap:12px}
-.alarm .t{font-size:38px;font-weight:700;letter-spacing:1px}
-.alarm .info{flex:1;min-width:0}
-.alarm .lbl{font-size:14px}
-.alarm .ms{font-size:12px;color:var(--sub);margin-top:4px;line-height:1.5}
-.alarm.off .t,.alarm.off .lbl{opacity:.4}
-.sw{width:52px;height:30px;border-radius:20px;background:#3a4066;position:relative;flex:none;padding:0}
-.sw::after{content:"";position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
-.sw.on{background:var(--ok)}.sw.on::after{left:25px}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.row button{padding:8px 12px;font-size:13px}
-.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:16px 28px;border-radius:30px;font-size:16px;box-shadow:0 6px 20px #0008}
-.empty{text-align:center;color:var(--sub);padding:40px 0}
-/* modal */
-.modal{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;z-index:50}
-.modal.show{display:flex}
-.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px}
-label.f{display:block;font-size:13px;color:var(--sub);margin:14px 0 6px}
-input[type=time]{font-size:40px;background:var(--card2);color:var(--txt);border:0;border-radius:14px;padding:8px 14px;width:100%;color-scheme:dark}
-input[type=text],select{font-size:16px;background:var(--card2);color:var(--txt);border:0;border-radius:12px;padding:10px 12px;width:100%}
+.btn{border-radius:16px;padding:14px 18px;font-weight:700;font-size:15px;background:var(--glass2);border:1px solid var(--line);transition:.15s}
+.btn.pri{background:var(--grad);color:#2B0F1A;border:0;box-shadow:0 10px 30px -10px #FF6A5Caa}
+.btn.sky{background:var(--grad-sky);color:#fff;border:0}
+.btn.sm{padding:8px 12px;font-size:13px;border-radius:12px}
+.ico{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--sub);font-size:13px}.note{color:var(--mute);font-size:12px;line-height:1.6}
+
+/* ---------- 브랜드 ---------- */
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:44px;height:44px;border-radius:13px;box-shadow:0 8px 24px -8px #FF6A5C99}
+.brand .wm{font-size:24px;font-weight:900;letter-spacing:-.5px;line-height:1.05}
+.brand .tg{font-size:11.5px;color:var(--sub);letter-spacing:.2px;margin-top:3px}
+
+/* ---------- 로그인 ---------- */
+#authView .hero{text-align:center;padding:9vh 0 26px}
+#authView .hero img{width:112px;height:112px;border-radius:32px;box-shadow:0 24px 60px -18px #FF6A5Cbb,0 0 0 1px #ffffff14;animation:float 4s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+#authView h1{font-size:40px;font-weight:900;margin:22px 0 6px;letter-spacing:-1.2px}
+#authView .lead{color:var(--sub);font-size:15px}
+.seg{display:flex;padding:4px;border-radius:14px;background:#0006;border:1px solid var(--line)}
+.seg button{flex:1;padding:11px 0;border-radius:11px;font-weight:700;color:var(--sub);font-size:14px}
+.seg button.on{background:var(--glass2);color:var(--txt);box-shadow:0 2px 10px #0005}
+.field{margin-top:14px}
+.field label{display:block;font-size:12.5px;color:var(--sub);margin:0 0 7px 2px;font-weight:600}
+.inp{width:100%;font:inherit;font-size:16px;color:var(--txt);background:#0007;border:1px solid var(--line);border-radius:14px;padding:14px 15px;outline:none;transition:.15s}
+.inp:focus{border-color:#FF8A4C88;box-shadow:0 0 0 4px #FF8A4C22}
+.err{color:var(--red);font-size:13.5px;min-height:20px;margin:12px 2px 4px;font-weight:600}
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+.feat div{padding:12px 6px;text-align:center;font-size:12px;color:var(--sub);border-radius:16px}
+.feat b{display:block;font-size:20px;margin-bottom:4px}
+.apk{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 16px;text-decoration:none;color:var(--txt)}
+.apk .ic{width:40px;height:40px;border-radius:12px;background:var(--grad-sky);display:grid;place-items:center}
+.apk b{display:block;font-size:14.5px}.apk span{font-size:12px;color:var(--sub)}
+
+/* ---------- 메인 ---------- */
+.top{display:flex;justify-content:space-between;align-items:center}
+.user{display:flex;align-items:center;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;font-size:12.5px;background:var(--glass);border:1px solid var(--line);color:var(--sub)}
+.next{margin-top:20px;padding:20px;position:relative;overflow:hidden}
+.next::after{content:"";position:absolute;right:-60px;bottom:-90px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,#FF8A4C66,#FF4D8D22 50%,transparent 70%)}
+.next .k{font-size:12.5px;color:var(--sub);font-weight:600}
+.next .v{font-size:22px;font-weight:800;margin-top:6px;position:relative;z-index:1}
+.next .v small{font-size:14px;color:var(--sub);font-weight:600;margin-left:6px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:26px 4px 10px}
+.sec h2{font-size:17px;margin:0;font-weight:800}
+.alarm{padding:18px 18px 14px;margin-bottom:12px;transition:.2s}
+.alarm.off{opacity:.55}
+.alarm .row1{display:flex;align-items:center;gap:12px}
+.alarm .t{font-size:44px;font-weight:800;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1}
+.alarm .t small{font-size:15px;font-weight:700;color:var(--sub);margin-right:6px;letter-spacing:0}
+.alarm .meta{flex:1;min-width:0}
+.alarm .lbl{font-size:14px;font-weight:700;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dayrow{display:flex;gap:4px;margin-top:6px}
+.dayrow i{font-style:normal;font-size:11px;width:20px;height:20px;border-radius:7px;display:grid;place-items:center;color:var(--mute)}
+.dayrow i.on{background:#FF8A4C26;color:#FFB37A;font-weight:700}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.mchip{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:10px;font-size:12px;background:#ffffff0d;color:#D9DBF5}
+.mchip .ico{width:14px;height:14px}
+.mchip.body{background:#FF8A4C1c;color:#FFC59C}
+.mchip.snd{background:#7C9CFF1c;color:#B8C8FF}
+.acts{display:flex;gap:6px;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.acts button{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);padding:6px 10px;border-radius:10px}
+.acts button:hover{background:#ffffff0d}
+.acts .ico{width:16px;height:16px}
+.sw{width:56px;height:32px;border-radius:20px;background:#ffffff1a;position:relative;flex:none;transition:.2s}
+.sw::after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.25s cubic-bezier(.3,1.4,.5,1);box-shadow:0 2px 6px #0006}
+.sw.on{background:var(--grad)}.sw.on::after{left:27px}
+.empty{text-align:center;padding:40px 20px;color:var(--sub)}
+.empty img{width:80px;opacity:.8;margin-bottom:10px}
+.fab{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:16px 26px;border-radius:999px;font-size:16px;z-index:20}
+.fab:active{transform:translateX(-50%) scale(.96)}
+.arm{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-top:12px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px #FF547022;flex:none}
+.dot.on{background:var(--mint);box-shadow:0 0 0 4px #3BE0A522,0 0 12px var(--mint)}
+.perm{display:flex;align-items:center;gap:10px;margin-top:10px}
+
+/* ---------- 편집 시트 ---------- */
+.modal{position:fixed;inset:0;background:#02031099;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal.show{display:flex;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.sheet{background:linear-gradient(180deg,#171C44,#0E1230);border:1px solid var(--line);border-bottom:0;width:100%;max-width:520px;max-height:94vh;overflow:auto;border-radius:28px 28px 0 0;padding:10px 18px calc(24px + env(safe-area-inset-bottom));animation:up .28s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.grab{width:42px;height:5px;border-radius:3px;background:#ffffff2a;margin:0 auto 12px}
+.shead{display:flex;justify-content:space-between;align-items:center;position:sticky;top:-10px;background:#171C44;margin:-10px -18px 0;padding:12px 18px;z-index:3}
+.shead h3{margin:0;font-size:18px}
+.timein{width:100%;font:inherit;font-size:56px;font-weight:800;text-align:center;color:var(--txt);background:#0007;border:1px solid var(--line);border-radius:20px;padding:10px;color-scheme:dark;letter-spacing:-1px}
+.lab{font-size:12.5px;color:var(--sub);font-weight:700;margin:22px 2px 9px;display:flex;justify-content:space-between;align-items:center}
 .days{display:flex;gap:6px}
-.days button{flex:1;padding:10px 0;border-radius:10px}
-.days button.on{background:var(--acc2);color:#fff}
-.palette{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.palette button{text-align:left;font-size:13px;padding:10px}
-.palette b{display:block;font-size:14px}
-.mlist .mi{display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:12px;padding:10px;margin-top:8px}
-.mi .nm{flex:1;font-size:14px}
-.mi input{width:64px;background:#141936;color:var(--txt);border:0;border-radius:8px;padding:6px;font-size:15px;text-align:center}
-.mi select{width:auto;padding:6px;font-size:13px}
-.mi button{padding:6px 10px}
-.tag{font-size:11px;padding:2px 6px;border-radius:6px;background:#2f3866;color:#b9c3ff;margin-right:4px}
-.tag.body{background:#3d2d18;color:#ffd08a}
-/* fullscreen alarm layer */
-#lock{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 30%,#2b1d48,#0b0d1a 70%);display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 18px;overflow:auto}
+.days button{flex:1;padding:11px 0;border-radius:12px;background:#ffffff0c;font-weight:700;font-size:14px;color:var(--sub)}
+.days button.on{background:var(--grad);color:#2B0F1A}
+.days button.we{color:#FF8FA9}.days button.we.on{color:#2B0F1A}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pills button{padding:9px 13px;border-radius:12px;background:#ffffff0c;font-size:13.5px;font-weight:600;color:var(--sub)}
+.pills button.on{background:#FF8A4C26;color:#FFC09A;box-shadow:inset 0 0 0 1.5px #FF8A4C}
+.slist{display:flex;flex-direction:column;gap:6px}
+.srow{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;background:#ffffff08;border:1.5px solid transparent}
+.srow.on{border-color:#FF8A4C;background:#FF8A4C14}
+.srow .nm{flex:1;font-size:14px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .nm small{display:block;font-size:11.5px;color:var(--mute);font-weight:500}
+.srow .rb{width:20px;height:20px;border-radius:50%;border:2px solid #ffffff40;flex:none;display:grid;place-items:center}
+.srow.on .rb{border-color:#FF8A4C}.srow.on .rb::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--grad)}
+.srow .ib{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#ffffff0d;color:var(--sub)}
+.srow .ib .ico{width:16px;height:16px}
+.srow.add{justify-content:center;color:#B8C8FF;font-weight:700;font-size:14px;border:1.5px dashed #7C9CFF66;background:#7C9CFF0d}
+.vol{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:#ffffff08}
+.vol input{flex:1;accent-color:#FF8A4C;height:28px}
+.vol b{font-variant-numeric:tabular-nums;width:46px;text-align:right}
+.mi{display:flex;align-items:center;gap:10px;padding:12px;border-radius:16px;background:#ffffff08;margin-bottom:8px;flex-wrap:wrap}
+.mi .badge{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:#7C9CFF22;color:#B8C8FF}
+.mi .badge.body{background:#FF8A4C22;color:#FFB37A}
+.mi .nm{flex:1;min-width:90px;font-weight:700;font-size:14.5px}
+.mi .nm small{display:block;font-size:11.5px;color:var(--mute);font-weight:600;margin-top:2px}
+.mi .ctl{display:flex;align-items:center;gap:6px;width:100%;padding-left:48px}
+.mi select{font:inherit;font-size:13px;color:var(--txt);background:#0007;border:1px solid var(--line);border-radius:10px;padding:8px;flex:1;min-width:0}
+.step{display:flex;align-items:center;background:#0007;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.step button{width:34px;height:36px;font-size:18px;color:var(--sub)}
+.step input{width:52px;text-align:center;font:inherit;font-weight:800;font-size:15px;background:none;border:0;color:var(--txt);outline:none}
+.step span{font-size:12px;color:var(--sub);padding-right:10px}
+.mi .x{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--mute)}
+.pal-h{font-size:12px;color:var(--mute);font-weight:700;margin:14px 2px 8px}
+.palette{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.palette button{padding:14px 6px;border-radius:16px;background:#ffffff08;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#D9DBF5}
+.palette button .ico{width:24px;height:24px;color:#B8C8FF}
+.palette.body button .ico{color:#FFB37A}
+
+/* ---------- 알람 잠금 화면 ---------- */
+#lock{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;padding:calc(20px + env(safe-area-inset-top)) 18px 24px;overflow:auto;
+  background:radial-gradient(120% 70% at 50% 110%,#FF7A45 0%,#C2366E 30%,#3B1C6E 60%,#0B0F2A 100%)}
 #lock.show{display:flex}
-.bigtime{font-size:72px;font-weight:800;margin-top:6vh}
-.ring-anim{animation:shake .5s infinite}
-@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
-.startbtn{margin-top:40px;width:220px;height:220px;border-radius:50%;font-size:26px;font-weight:800;background:var(--acc);color:#2a1a00;box-shadow:0 0 0 12px #ffb54733,0 0 0 26px #ffb54718;animation:pulse 1.2s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 18px #ffb54744,0 0 0 36px #ffb54711}}
-.topbar{width:100%;max-width:480px;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--sub)}
-.timer{font-size:22px;font-weight:800;color:var(--acc)}
-.timer.warn{color:var(--bad)}
-.tbar{width:100%;max-width:480px;height:8px;background:#ffffff18;border-radius:5px;margin:8px 0 16px;overflow:hidden}
-.tbar i{display:block;height:100%;background:var(--acc);transition:width 1s linear}
+#lock.calm{background:radial-gradient(120% 70% at 50% 120%,#3B1C6E 0%,#121640 55%,#070A1F 100%)}
+.bigtime{font-size:88px;font-weight:900;letter-spacing:-3px;margin-top:7vh;font-variant-numeric:tabular-nums;text-shadow:0 10px 40px #0008}
+.ring-ico{width:70px;height:70px;animation:shake .45s infinite;margin-top:4vh}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+.lk-label{font-size:22px;font-weight:800;margin-top:4px}
+.lk-info{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.startbtn{margin-top:38px;width:210px;height:210px;border-radius:50%;font-size:26px;font-weight:900;color:#2B0F1A;background:radial-gradient(circle at 35% 30%,#FFF1B8,#FFD36E 35%,#FF8A4C 75%,#FF4D8D);
+  box-shadow:0 0 0 14px #ffffff18,0 0 0 30px #ffffff0c,0 30px 60px -10px #000a;animation:pulse 1.3s infinite;line-height:1.25}
+@keyframes pulse{50%{box-shadow:0 0 0 22px #ffffff22,0 0 0 44px #ffffff08,0 30px 60px -10px #000a}}
+.lk-hint{color:#FFE3EAcc;font-size:13.5px;text-align:center;line-height:1.7;margin-top:30px}
+.lk-fail{margin-top:14px;padding:10px 16px;border-radius:14px;background:#0006;color:#FFD0DA;font-weight:800;font-size:15px}
+.mtop{width:100%;max-width:480px;display:flex;justify-content:space-between;align-items:center}
+.mtop .k{font-size:13px;color:var(--sub);font-weight:700}
+.timer{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;padding:6px 14px;border-radius:12px;background:#ffffff10}
+.timer.warn{color:#fff;background:var(--red);animation:pulse2 .5s infinite}
+@keyframes pulse2{50%{opacity:.7}}
+.tbar{width:100%;max-width:480px;height:6px;background:#ffffff14;border-radius:5px;margin:12px 0 10px;overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--grad);transition:width 1s linear;border-radius:5px}
+.steps{display:flex;gap:6px;justify-content:center;margin:2px 0 10px}
+.steps i{width:26px;height:5px;border-radius:3px;background:#ffffff22}
+.steps i.d{background:var(--mint)}.steps i.c{background:var(--sun1)}
 .mbox{width:100%;max-width:480px;text-align:center}
-.mtitle{font-size:20px;font-weight:700;margin:6px 0}
-.q{font-size:44px;font-weight:800;margin:18px 0 8px}
-.ans{font-size:36px;min-height:52px;background:#ffffff10;border-radius:14px;padding:6px;margin-bottom:12px;letter-spacing:2px}
+.mtitle{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:800;padding:8px 14px;border-radius:12px;background:#ffffff0d;margin-top:6px}
+.q{font-size:clamp(30px,10vw,46px);font-weight:900;margin:26px 0 14px;font-variant-numeric:tabular-nums;letter-spacing:-.5px;word-break:keep-all}
+.ans{font-size:40px;font-weight:900;min-height:64px;background:#0006;border:1px solid var(--line);border-radius:18px;padding:8px;margin-bottom:14px;letter-spacing:2px;font-variant-numeric:tabular-nums}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.pad button{font-size:26px;padding:16px 0;background:#ffffff14}
-.grid{display:grid;gap:8px;margin:16px auto;width:100%;max-width:360px}
-.grid button{aspect-ratio:1;border-radius:12px;background:#ffffff14;font-size:22px;font-weight:700;padding:0}
-.grid button.lit{background:var(--acc2)}
-.grid button.hit{background:var(--ok)}
-.grid button.miss{background:var(--bad)}
-.grid button.done{opacity:.25}
-.counter{font-size:96px;font-weight:800;margin:20px 0 0}
-.hint{color:var(--sub);font-size:14px;line-height:1.6}
-.steps{display:flex;gap:6px;justify-content:center;margin:6px 0 4px}
-.steps i{width:28px;height:6px;border-radius:3px;background:#ffffff22}
-.steps i.d{background:var(--ok)}.steps i.c{background:var(--acc)}
+.pad button{font-size:26px;font-weight:800;padding:16px 0;border-radius:16px;background:#ffffff10}
+.pad .ok{background:var(--grad);color:#2B0F1A;font-size:18px}
+.grid{display:grid;gap:7px;margin:18px auto;width:100%;max-width:360px}
+.grid button{aspect-ratio:1;border-radius:12px;background:#ffffff12;font-size:clamp(14px,4.5vw,22px);font-weight:800;transition:background .15s}
+.grid button.lit{background:var(--grad-sky);box-shadow:0 0 18px #7C9CFF88}
+.grid button.hit{background:var(--mint);color:#032}
+.grid button.miss{background:var(--red)}
+.grid button.done{opacity:.18}
+.counter{font-size:110px;font-weight:900;margin:30px 0 0;line-height:1;font-variant-numeric:tabular-nums}
+.ring{width:220px;height:220px;margin:24px auto 0;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .in b{font-size:72px;font-weight:900;line-height:1}
+.ring .in span{color:var(--sub);font-size:15px;margin-top:6px}
+.hint{color:var(--sub);font-size:14px;line-height:1.7}
 .shakeX{animation:sx .3s}
 @keyframes sx{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-.check{margin-top:12vh;text-align:center}
-.check h2{font-size:30px}
-.yes{width:240px;height:110px;font-size:34px;font-weight:800;border-radius:24px;background:var(--ok);color:#022;margin-top:20px}
-.cd{font-size:64px;font-weight:800;color:var(--bad)}
-.toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);background:#000c;padding:10px 16px;border-radius:12px;z-index:300;font-size:14px;display:none}
-.note{font-size:12px;color:var(--sub);line-height:1.6}
+.check{margin-top:10vh;text-align:center}
+.check h2{font-size:32px;font-weight:900;margin:14px 0 4px}
+.cdring{width:150px;height:150px;margin:20px auto;position:relative}
+.cdring b{position:absolute;inset:0;display:grid;place-items:center;font-size:56px;font-weight:900}
+.yes{width:250px;height:96px;font-size:30px;font-weight:900;border-radius:28px;background:linear-gradient(135deg,#5BF0B8,#2BC48A);color:#022a1c;box-shadow:0 20px 40px -12px #2BC48Aaa}
+.toast{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top));transform:translateX(-50%);background:#000c;border:1px solid var(--line);padding:11px 18px;border-radius:14px;z-index:300;font-size:14px;font-weight:600;display:none;white-space:nowrap}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<!-- 로그인 / 회원가입 -->
+<!-- ============ 로그인 ============ -->
 <div id="authView" style="display:none">
-  <div style="text-align:center;margin-top:10vh">
-    <div style="font-size:64px">⏰</div>
-    <h1 style="font-size:30px">깨워알람</h1>
-    <div class="sub">미션을 끝내야만 꺼지는 알람</div>
+  <div class="hero">
+    <img src="logo.svg" alt="깨워알람 로고">
+    <h1><span class="grad-text">깨워알람</span></h1>
+    <div class="lead">미션을 끝내야만 꺼지는 알람</div>
   </div>
-  <div class="card" style="margin-top:28px">
-    <div class="days" id="authTabs"><button data-tab="login" class="on">로그인</button><button data-tab="register">회원가입</button></div>
-    <label class="f">아이디</label><input type="text" id="auUser" autocomplete="username" placeholder="3~20자">
-    <label class="f">비밀번호</label><input type="text" id="auPass" autocomplete="current-password" placeholder="4자 이상" style="-webkit-text-security:disc">
-    <div id="auPass2Wrap" style="display:none"><label class="f">비밀번호 확인</label><input type="text" id="auPass2" style="-webkit-text-security:disc"></div>
-    <div id="auErr" style="color:var(--bad);font-size:14px;min-height:20px;margin-top:10px"></div>
-    <button class="pri" id="auBtn" style="width:100%;margin-top:6px;padding:14px">로그인</button>
-    <div class="note" style="margin-top:12px">서버가 잠들어 있으면 첫 로그인에 30초~1분 걸릴 수 있어요.</div>
+  <div class="glass" style="padding:18px">
+    <div class="seg" id="authTabs"><button data-tab="login" class="on">로그인</button><button data-tab="register">회원가입</button></div>
+    <div class="field"><label>아이디</label><input class="inp" type="text" id="auUser" autocomplete="username" placeholder="3~20자 (한글·영문·숫자)" autocapitalize="off"></div>
+    <div class="field"><label>비밀번호</label><input class="inp" type="password" id="auPass" autocomplete="current-password" placeholder="4자 이상"></div>
+    <div class="field" id="auPass2Wrap" style="display:none"><label>비밀번호 확인</label><input class="inp" type="password" id="auPass2" autocomplete="new-password"></div>
+    <div class="err" id="auErr"></div>
+    <button class="btn pri" id="auBtn" style="width:100%;padding:16px">로그인</button>
+    <div class="note" style="margin-top:12px;text-align:center">서버가 쉬고 있으면 첫 접속에 30초~1분 걸릴 수 있어요.</div>
+  </div>
+  <div class="feat">
+    <div class="glass"><b>🧠</b>정신 깨우기<br>암산·타일·순서</div>
+    <div class="glass"><b>🏃</b>몸 깨우기<br>스쿼트·걷기·흔들기</div>
+    <div class="glass"><b>🌞</b>재확인 알림<br>다시 잠들기 금지</div>
   </div>
   <div id="apkLink1"></div>
 </div>
 
+<!-- ============ 메인 ============ -->
 <div id="mainView" style="display:none">
-<div style="display:flex;justify-content:space-between;align-items:flex-start">
-  <div><h1>⏰ 깨워알람</h1><div class="sub">미션을 끝내야만 꺼지는 알람</div></div>
-  <div style="text-align:right"><div class="sub" id="whoami"></div><div class="note" id="syncState"></div>
-    <button class="ghost" id="logoutBtn" style="padding:6px 10px;font-size:12px;margin-top:4px">로그아웃</button></div>
+  <div class="top">
+    <div class="brand"><img src="logo.svg" alt=""><div><div class="wm grad-text">깨워알람</div><div class="tg">미션을 끝내야 꺼지는 알람</div></div></div>
+    <button class="chip" id="userChip"><svg class="ico" style="width:14px;height:14px" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="whoami"></span></button>
+  </div>
+
+  <div class="glass next">
+    <div class="k" id="nextK">다음 알람</div>
+    <div class="v" id="nextV">-</div>
+    <div class="note" id="syncState" style="margin-top:8px;position:relative;z-index:1"></div>
+  </div>
+
+  <div class="glass arm" id="armCard">
+    <span class="dot" id="armDot"></span>
+    <div style="flex:1"><b id="armTxt" style="font-size:14px">알람 대기 꺼짐</b><div class="note" id="armNote"></div></div>
+    <button class="btn sky sm" id="armBtn">대기 켜기</button>
+  </div>
+
+  <div class="glass" id="nativePanel" style="display:none;padding:16px;margin-top:12px">
+    <b style="font-size:14px">📱 알람이 확실히 울리도록 권한을 켜 주세요</b>
+    <div id="permList"></div>
+  </div>
+
+  <div class="sec"><h2>내 알람</h2><span class="sub" id="cnt"></span></div>
+  <div id="list"></div>
+  <div id="apkLink2"></div>
+  <button class="btn pri fab" id="addBtn"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>알람 추가</button>
+</div>
 </div>
 
-<div class="card" id="nativePanel" style="display:none">
-  <b>📱 앱 권한 설정</b>
-  <div class="note" style="margin:6px 0 10px">알람이 잠금화면에서도 울리고, 끄기 전에 앱이 닫히지 않게 하려면 아래 권한이 필요해요.</div>
-  <div id="permList"></div>
-</div>
-
-<div class="card armed" id="armCard">
-  <div><span class="dot" id="armDot"></span><span id="armTxt">알람 대기 꺼짐</span>
-    <div class="note" id="armNote">알람이 울리려면 대기 모드를 켜고 이 화면을 열어 두세요.</div></div>
-  <button class="blue" id="armBtn">대기 켜기</button>
-</div>
-
-<div id="list"></div>
-<div id="apkLink2"></div>
-<button class="pri fab" id="addBtn">＋ 알람 추가</button>
-</div>
-
-<!-- editor -->
+<!-- ============ 편집 시트 ============ -->
 <div class="modal" id="editor"><div class="sheet">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <h2 style="margin:0" id="edTitle">알람 추가</h2>
-    <button class="ghost" id="edCancel">취소</button>
-  </div>
-  <label class="f">시간</label>
-  <input type="time" id="edTime" value="07:00">
-  <label class="f">이름</label>
-  <input type="text" id="edLabel" placeholder="예: 기상!" maxlength="30">
-  <label class="f">반복 (선택 안 하면 한 번만)</label>
+  <div class="shead"><button class="btn sm" id="edCancel">취소</button><h3 id="edTitle">알람 추가</h3><button class="btn pri sm" id="edSave">저장</button></div>
+  <input type="time" class="timein" id="edTime" value="07:00" style="margin-top:8px">
+  <div class="lab">이름</div>
+  <input class="inp" type="text" id="edLabel" placeholder="예: 출근 준비!" maxlength="30">
+  <div class="lab">반복 <span class="note">선택 안 하면 한 번만</span></div>
   <div class="days" id="edDays"></div>
-  <label class="f">미션 제한 시간 (시간 안에 전부 못 하면 다시 울림)</label>
-  <select id="edLimit">
-    <option value="60">1분</option><option value="90">1분 30초</option><option value="120" selected>2분</option>
-    <option value="180">3분</option><option value="300">5분</option><option value="600">10분</option>
-  </select>
-  <label class="f">미션 (위에서부터 순서대로 진행)</label>
-  <div class="mlist" id="edMissions"></div>
-  <label class="f">미션 추가</label>
-  <div class="palette" id="palette"></div>
-  <div style="display:flex;gap:8px;margin-top:20px">
-    <button class="ghost" id="edDelete" style="color:var(--bad)">삭제</button>
-    <button class="pri" id="edSave" style="flex:1">저장</button>
-  </div>
+  <div class="lab">미션 제한 시간 <span class="note">시간 안에 다 못 하면 다시 울림</span></div>
+  <div class="pills" id="edLimit"></div>
+  <div class="lab">알람음</div>
+  <div class="slist" id="edSounds"></div>
+  <input type="file" id="sndFile" accept="audio/*,.mp3" style="display:none">
+  <div class="lab">소리 크기 <span class="note">🔒 울리는 동안 고정 — 버튼으로도 못 바꿔요</span></div>
+  <div class="vol"><svg class="ico" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    <input type="range" id="edVol" min="10" max="100" step="5" value="80"><b id="edVolV">80%</b>
+    <button class="btn sm" id="edVolTest">▶</button></div>
+  <div class="lab">미션 <span class="note">위에서부터 순서대로</span></div>
+  <div id="edMissions"></div>
+  <div class="pal-h">🧠 정신 깨우기</div>
+  <div class="palette" id="palMind"></div>
+  <div class="pal-h">🏃 몸 깨우기</div>
+  <div class="palette body" id="palBody"></div>
+  <button class="btn" id="edDelete" style="width:100%;margin-top:26px;color:var(--red)">알람 삭제</button>
 </div></div>
 
-<!-- lock screen -->
+<!-- 계정 시트 -->
+<div class="modal" id="acct"><div class="sheet">
+  <div class="grab"></div>
+  <h3 style="margin:4px 0 4px">👤 <span id="acName"></span></h3>
+  <div class="note">알람과 알람음은 계정에 저장돼서 다른 기기에서도 그대로 보여요.</div>
+  <button class="btn" id="logoutBtn" style="width:100%;margin-top:18px;color:var(--red)">로그아웃</button>
+  <button class="btn" id="acClose" style="width:100%;margin-top:8px">닫기</button>
+</div></div>
+
 <div id="lock"></div>
 <div class="toast" id="toast"></div>
 
 <script>
-/* ================= 데이터 ================= */
-const MISSIONS={
-  math:{name:"수학 암산",kind:"mind",icon:"🧮",param:"문제 수",def:3,min:1,max:20,level:true},
-  tiles:{name:"타일 기억하기",kind:"mind",icon:"🟦",param:"라운드",def:3,min:1,max:10},
-  order:{name:"숫자 순서 누르기",kind:"mind",icon:"🔢",param:"숫자 개수",def:16,min:6,max:25},
-  squat:{name:"스쿼트",kind:"body",icon:"🏋️",param:"회",def:10,min:3,max:100},
-  walk:{name:"걷기",kind:"body",icon:"🚶",param:"보",def:50,min:10,max:500},
-  shake:{name:"폰 흔들기",kind:"body",icon:"📳",param:"회",def:30,min:10,max:300}
-};
-const DAYN=["일","월","화","수","목","금","토"];
-const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-/* ================= 설정 / 계정 / 동기화 ================= */
-const REMOTE="https://wake-up-alarm-lhkc.onrender.com";            // Render 주소
+/* ================================================================
+   설정
+================================================================ */
+const REMOTE="https://kkaewo-alarm.onrender.com";
 const APK_URL="https://github.com/chanhui2837/wake-up-/releases/latest/download/wakeup-alarm.apk";
-const API=location.protocol.startsWith("http")?"":REMOTE;     // 앱(WebView)에서는 Render 서버로
-const NB=window.AndroidAlarm||null;                           // 안드로이드 앱 연결
-const NATIVE=!!NB;
+const API=location.protocol.startsWith("http")?"":REMOTE;
+const NB=window.AndroidAlarm||null, NATIVE=!!NB;
+const $=id=>document.getElementById(id);
+const pad2=n=>String(n).padStart(2,"0");
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2300)}
+
+/* ---------- 아이콘 ---------- */
+const I={
+  math:'<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7.5 9h4M9.5 7v4M13.5 9h3M7.5 15.5h4M13.5 14.5h3M13.5 16.5h3"/></svg>',
+  tiles:'<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" fill="currentColor"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" fill="currentColor"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>',
+  order:'<svg class="ico" viewBox="0 0 24 24"><path d="M5 4h2v6M5 10h4M5 14.5c0-1 1-1.5 2-1.5s2 .6 2 1.6c0 1.6-4 2.4-4 4.4h4"/><path d="M13 6h8M13 12h8M13 18h8"/></svg>',
+  squat:'<svg class="ico" viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="2"/><path d="M12.5 7.5 10 13l4 1.5 1 6.5M10 13l-3 3.5L6 21M8.5 9.5 5 10.5M12.5 7.5l5 1.5"/></svg>',
+  walk:'<svg class="ico" viewBox="0 0 24 24"><path d="M8 3c2 0 3 2 3 4.5S10 12 8.5 12 6 10.5 6 8 6.5 3 8 3zM7 14.5h3v1.5a1.5 1.5 0 0 1-3 0zM16 8c2 0 3 2 3 4.5S18 17 16.5 17 14 15.5 14 13s.5-5 2-5zM15 19.5h3V21a1.5 1.5 0 0 1-3 0z"/></svg>',
+  shake:'<svg class="ico" viewBox="0 0 24 24"><rect x="7.5" y="3" width="9" height="18" rx="2.5"/><path d="M11 17.5h2M3.5 8v8M20.5 8v8"/></svg>',
+  play:'<svg class="ico" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>',
+  stop:'<svg class="ico" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>',
+  trash:'<svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  edit:'<svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  bell:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 9.5V13l2.5 1.5M5 4 2.5 6.5M19 4l2.5 2.5"/></svg>',
+  music:'<svg class="ico" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+  up:'<svg class="ico" viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg>',
+  x:'<svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  plus:'<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+};
+
+/* ---------- 미션 정의 ---------- */
+const LV=["쉬움","보통","어려움","매우 어려움"];
+const MISSIONS={
+  math:{name:"수학 암산",kind:"mind",unit:"문제",def:3,min:1,max:30,levels:["한 자리 + 한 자리","두 자리 + 두 자리","두 자리 3개 더하기","세 자리 4개 더하기"]},
+  tiles:{name:"타일 기억",kind:"mind",unit:"판",def:3,min:1,max:20,levels:["3×3 칸","4×4 칸","5×5 칸","6×6 칸"]},
+  order:{name:"숫자 순서",kind:"mind",unit:"판",def:2,min:1,max:10,levels:["1~9 (3×3)","1~16 (4×4)","1~25 (5×5)","1~36 (6×6)"]},
+  squat:{name:"스쿼트",kind:"body",unit:"회",def:10,min:1,max:200},
+  walk:{name:"걷기",kind:"body",unit:"보",def:50,min:10,max:3000},
+  shake:{name:"폰 흔들기",kind:"body",unit:"회",def:30,min:5,max:500},
+};
+function mDesc(m){const d=MISSIONS[m.type];return d.kind==="mind"?`${LV[(m.level||1)-1]} · ${m.count}${d.unit}`:`${m.count}${d.unit}`}
+
+/* ---------- 알람음 ---------- */
+const BUILTIN=[
+  {id:"system",name:"휴대폰 기본 알람음",desc:"앱에서만 · 웹에서는 디지털 비프"},
+  {id:"beep",name:"디지털 비프",desc:"삐삐삐삐 — 가장 확실한 소리"},
+  {id:"siren",name:"사이렌",desc:"점점 올라가는 경고음"},
+  {id:"chime",name:"맑은 종소리",desc:"부드럽지만 계속 울림"},
+];
+let mySounds=LS.get("wa_sounds",[]);
+const soundName=id=>(BUILTIN.find(s=>s.id===id)||mySounds.find(s=>s.id===id)||{name:"휴대폰 기본 알람음"}).name;
+
+/* IndexedDB: 올린 mp3 보관 (오프라인에서도 울리도록) */
+const IDB={db:null,open(){return this.db?Promise.resolve(this.db):new Promise((ok,no)=>{const r=indexedDB.open("kkaewo",1);r.onupgradeneeded=()=>r.result.createObjectStore("sounds");r.onsuccess=()=>{this.db=r.result;ok(this.db)};r.onerror=()=>no(r.error)})},
+  async get(k){try{const db=await this.open();return await new Promise(ok=>{const q=db.transaction("sounds").objectStore("sounds").get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch(e){return null}},
+  async put(k,v){try{const db=await this.open();await new Promise(ok=>{const t=db.transaction("sounds","readwrite");t.objectStore("sounds").put(v,k);t.oncomplete=ok;t.onerror=ok})}catch(e){}},
+  async del(k){try{const db=await this.open();await new Promise(ok=>{const t=db.transaction("sounds","readwrite");t.objectStore("sounds").delete(k);t.oncomplete=ok;t.onerror=ok})}catch(e){}}};
+const blobToB64=b=>new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]||"");r.readAsDataURL(b)});
+async function nativeSave(id,blob){if(!NATIVE)return;try{if(!NB.hasSound(id))NB.saveSound(id,await blobToB64(blob))}catch(e){}}
+
+/* ================================================================
+   상태 / 계정 / 동기화
+================================================================ */
 let token=LS.get("wa_token",null), me=LS.get("wa_user",null);
 let alarms=LS.get("wa_alarms",[]);
 let S=LS.get("wa_state",{mode:"idle"}); // idle | ringing | mission | waitcheck | checking
-const $=id=>document.getElementById(id);
 const saveS=()=>LS.set("wa_state",S);
 function saveA(){
   LS.set("wa_alarms",alarms);
   if(NATIVE){try{NB.setAlarms(JSON.stringify(alarms))}catch(e){}}
-  clearTimeout(saveA._t);saveA._t=setTimeout(pushAlarms,600);
+  clearTimeout(saveA._t);saveA._t=setTimeout(pushAlarms,500);
 }
 async function api(path,opt={}){
-  const r=await fetch(API+path,{...opt,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opt.headers||{})}});
+  const h={...(opt.raw?{}:{"Content-Type":"application/json"}),...(token?{Authorization:"Bearer "+token}:{}),...(opt.headers||{})};
+  const r=await fetch(API+path,{...opt,headers:h});
+  if(opt.blob&&r.ok)return r.blob();
   const j=await r.json().catch(()=>({}));
   if(r.status===401&&token){logout(true);throw new Error(j.error||"로그인이 필요해요")}
   if(!r.ok)throw new Error(j.error||("서버 오류 "+r.status));
   return j;
 }
-function syncMsg(t){const e=$("syncState");if(e)e.textContent=t}
+const syncMsg=t=>{const e=$("syncState");if(e)e.textContent=t};
 async function pushAlarms(){
   if(!token)return;
-  try{syncMsg("저장 중…");await api("/api/alarms",{method:"PUT",body:JSON.stringify(alarms)});LS.set("wa_dirty",false);syncMsg("☁️ 저장됨")}
-  catch(e){LS.set("wa_dirty",true);syncMsg("⚠️ 오프라인 (나중에 저장)")}
+  try{syncMsg("☁️ 저장 중…");await api("/api/alarms",{method:"PUT",body:JSON.stringify(alarms)});LS.set("wa_dirty",false);syncMsg("☁️ 계정에 저장됨")}
+  catch(e){LS.set("wa_dirty",true);syncMsg("⚠️ 오프라인 — 연결되면 저장돼요")}
 }
 async function pullAlarms(){
   try{
-    syncMsg("불러오는 중…");
-    if(LS.get("wa_dirty",false)){await pushAlarms();return}
-    const list=await api("/api/alarms");
-    const old=Object.fromEntries(alarms.map(a=>[a.id,a.lastFired]));
-    alarms=list.map(a=>({...a,lastFired:old[a.id]||null}));
-    LS.set("wa_alarms",alarms);if(NATIVE){try{NB.setAlarms(JSON.stringify(alarms))}catch(e){}}
-    renderList();syncMsg("☁️ 동기화됨");
-  }catch(e){syncMsg("⚠️ 오프라인")}
+    syncMsg("☁️ 불러오는 중…");
+    if(LS.get("wa_dirty",false)){await pushAlarms();}
+    else{
+      const list=await api("/api/alarms");
+      const old=Object.fromEntries(alarms.map(a=>[a.id,a.lastFired]));
+      alarms=list.map(a=>({...a,lastFired:old[a.id]||null}));
+      LS.set("wa_alarms",alarms);if(NATIVE){try{NB.setAlarms(JSON.stringify(alarms))}catch(e){}}
+      renderList();syncMsg("☁️ 계정과 동기화됨");
+    }
+  }catch(e){syncMsg("⚠️ 오프라인 — 저장된 알람으로 동작해요")}
+  syncSounds();
+}
+async function syncSounds(){
+  try{
+    mySounds=await api("/api/sounds");LS.set("wa_sounds",mySounds);
+    for(const s of mySounds){
+      let b=await IDB.get(s.id);
+      if(!b){b=await api("/api/sounds/"+s.id,{blob:true});await IDB.put(s.id,b)}
+      await nativeSave(s.id,b);
+    }
+  }catch(e){}
 }
 function logout(expired){
   token=null;me=null;LS.set("wa_token",null);LS.set("wa_user",null);
-  alarms=[];LS.set("wa_alarms",[]);if(NATIVE){try{NB.setAlarms("[]")}catch(e){}}
-  showAuth();if(expired)$("auErr").textContent="로그인이 만료됐어요. 다시 로그인해 주세요.";
+  alarms=[];LS.set("wa_alarms",[]);mySounds=[];LS.set("wa_sounds",[]);
+  if(NATIVE){try{NB.setAlarms("[]")}catch(e){}}
+  $("acct").classList.remove("show");showAuth();
+  if(expired)$("auErr").textContent="로그인이 만료됐어요. 다시 로그인해 주세요.";
 }
 let authTab="login";
 function showAuth(){$("authView").style.display="";$("mainView").style.display="none"}
-function showMain(){$("authView").style.display="none";$("mainView").style.display="";$("whoami").textContent="👤 "+me;renderList();renderArm();renderNative();pullAlarms()}
-document.addEventListener("DOMContentLoaded",()=>{});
-function initAuthUI(){
+function showMain(){$("authView").style.display="none";$("mainView").style.display="";$("whoami").textContent=me;renderList();renderArm();renderNative();pullAlarms()}
+function initUI(){
   $("authTabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;authTab=b.dataset.tab;
     [...$("authTabs").children].forEach(x=>x.classList.toggle("on",x===b));
     $("auPass2Wrap").style.display=authTab==="register"?"":"none";$("auBtn").textContent=authTab==="register"?"회원가입":"로그인";$("auErr").textContent=""};
-  $("auBtn").onclick=async()=>{
+  const go=async()=>{
     const u=$("auUser").value.trim(),p=$("auPass").value;
+    if(!u||!p){$("auErr").textContent="아이디와 비밀번호를 입력해 주세요.";return}
     if(authTab==="register"&&p!==$("auPass2").value){$("auErr").textContent="비밀번호 확인이 달라요.";return}
-    $("auBtn").disabled=true;$("auErr").textContent=authTab==="register"?"가입 중…":"로그인 중…";
+    $("auBtn").disabled=true;$("auErr").textContent="";$("auBtn").textContent=authTab==="register"?"가입 중…":"로그인 중…";
     try{
       const j=await api("/api/auth/"+authTab,{method:"POST",body:JSON.stringify({username:u,password:p})});
       token=j.token;me=j.username;LS.set("wa_token",token);LS.set("wa_user",me);
-      $("auErr").textContent="";$("auPass").value="";$("auPass2").value="";
+      $("auPass").value="";$("auPass2").value="";
       if(authTab==="register"&&alarms.length)await pushAlarms();
-      showMain();
-    }catch(e){$("auErr").textContent=e.message.includes("fetch")?"서버에 연결할 수 없어요. 인터넷을 확인해 주세요.":e.message}
-    $("auBtn").disabled=false;
+      showMain();toast(authTab==="register"?"가입 완료! 첫 알람을 만들어 보세요":"반가워요, "+me+"님");
+    }catch(e){$("auErr").textContent=/fetch|network|Load failed/i.test(e.message)?"서버에 연결할 수 없어요. 인터넷을 확인해 주세요.":e.message}
+    $("auBtn").disabled=false;$("auBtn").textContent=authTab==="register"?"회원가입":"로그인";
   };
-  $("logoutBtn").onclick=()=>{if(locked())return;logout()};
-  const link=NATIVE?"":`<a href="${APK_URL}" style="display:block;text-align:center;margin:18px 0;color:var(--acc);font-weight:700;text-decoration:none">📱 안드로이드 앱(APK) 다운로드</a>`;
+  $("auBtn").onclick=go;
+  ["auUser","auPass","auPass2"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter")go()}));
+  $("userChip").onclick=()=>{$("acName").textContent=me;$("acct").classList.add("show")};
+  $("acClose").onclick=()=>$("acct").classList.remove("show");
+  $("logoutBtn").onclick=()=>{if(!locked())logout()};
+  const link=NATIVE?"":`<a class="glass apk" href="${APK_URL}"><div class="ic"><svg class="ico" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M12 7v7m-3-3 3 3 3-3M10 18h4"/></svg></div><div><b>안드로이드 앱 받기</b><span>잠금화면에서도 울리고, 끄기 전엔 못 나가요</span></div></a>`;
   $("apkLink1").innerHTML=link;$("apkLink2").innerHTML=link;
   if(NATIVE){$("armCard").style.display="none";armed=true}
 }
-/* ----- 안드로이드 권한 패널 ----- */
+
+/* ---------- 안드로이드 권한 패널 ---------- */
 function renderNative(){
   if(!NATIVE)return;
   let st={};try{st=JSON.parse(NB.permissions())}catch(e){}
-  const items=[["notif","알림 허용","알람·'깨어났나요?' 알림 표시"],["overlay","다른 앱 위에 표시","알람 끄기 전엔 앱이 닫혀도 다시 열림"],["exact","정확한 알람","정해진 시각에 정확히 울림"],["battery","배터리 최적화 제외","절전 때문에 알람이 늦지 않게"]];
+  const items=[["notif","알림","알람·'깨어났나요?' 알림"],["overlay","다른 앱 위에 표시","끄기 전엔 앱이 닫혀도 다시 열림"],["exact","정확한 알람","정해진 시각에 정확히"],["battery","배터리 최적화 제외","절전 때문에 늦지 않게"]];
   const miss=items.filter(i=>st[i[0]]===false);
   $("nativePanel").style.display=miss.length?"":"none";
-  $("permList").innerHTML=miss.map(i=>`<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><div style="flex:1"><b style="font-size:14px">${i[1]}</b><div class="note">${i[2]}</div></div><button class="blue" data-perm="${i[0]}" style="padding:8px 12px;font-size:13px">허용하기</button></div>`).join("");
+  $("permList").innerHTML=miss.map(i=>`<div class="perm"><div style="flex:1"><b style="font-size:13.5px">${i[1]}</b><div class="note">${i[2]}</div></div><button class="btn sky sm" data-perm="${i[0]}">허용</button></div>`).join("");
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-perm]");if(b&&NATIVE){try{NB.requestPermission(b.dataset.perm)}catch(x){}}});
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){renderNative()}});
-const pad2=n=>String(n).padStart(2,"0");
-function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2200)}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")renderNative()});
 
-/* ================= 소리 / 진동 ================= */
-let AC=null,ringTimer=null,armed=false,wakeLock=null;
-function unlockAudio(){
-  try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended") AC.resume(); }catch(e){}
+/* ================================================================
+   소리 (웹)
+================================================================ */
+let AC=null,master=null,ringTimer=null,ringAudio=null,armed=false,wakeLock=null,previewStop=null;
+function unlockAudio(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.connect(AC.destination)}if(AC.state==="suspended")AC.resume()}catch(e){}}
+function tone(freq,dur,vol=.5,type="square",when=0,dest){
+  if(!AC)return;const t=AC.currentTime+when,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.setValueAtTime(vol,t+dur-.03);g.gain.linearRampToValueAtTime(0,t+dur);
+  o.connect(g).connect(dest||AC.destination);o.start(t);o.stop(t+dur+.02);
 }
-function beep(freq,dur,vol=0.5,type="square",when=0){
-  if(!AC) return;
-  const t=AC.currentTime+when,o=AC.createOscillator(),g=AC.createGain();
-  o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.01);
-  g.gain.setValueAtTime(vol,t+dur-0.03);g.gain.linearRampToValueAtTime(0,t+dur);
-  o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+0.02);
+function sweep(f1,f2,dur,vol,dest){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";o.frequency.setValueAtTime(f1,t);o.frequency.linearRampToValueAtTime(f2,t+dur);g.gain.value=vol;o.connect(g).connect(dest);o.start(t);o.stop(t+dur)}
+/* 소리 패턴 재생 → stop 함수 반환. gain 노드가 소리 크기를 고정 */
+async function playSound(id,vol){
+  unlockAudio();const g=AC.createGain();g.gain.value=Math.max(.1,Math.min(1,vol/100));g.connect(AC.destination);
+  let iv=null,au=null;
+  if(id&&id.startsWith("snd_")){
+    const b=await IDB.get(id);
+    if(b){au=new Audio(URL.createObjectURL(b));au.loop=true;try{AC.createMediaElementSource(au).connect(g)}catch(e){au.volume=vol/100}au.play().catch(()=>{});}
+    else id="beep";
+  }
+  if(!au){
+    const pat={beep:()=>[0,.17,.34,.51].forEach((w,i)=>tone(i%2?740:988,.14,.7,"square",w,g)),
+      siren:()=>sweep(500,1300,1,.45,g),
+      chime:()=>{tone(880,.5,.6,"sine",0,g);tone(1318,.6,.5,"sine",.22,g);tone(1760,.8,.35,"sine",.45,g)}}[id==="system"?"beep":id]||(()=>{});
+    pat();iv=setInterval(pat,id==="siren"?1000:1100);
+  }
+  return()=>{clearInterval(iv);if(au){au.pause();au.src=""}try{g.disconnect()}catch(e){}};
 }
-function startRing(){
-  if(NATIVE){try{NB.startRing(S.alarmId||"",S.failMsg||"")}catch(e){} return}
-  stopRing(); unlockAudio();
-  const pattern=()=>{ [0,0.18,0.36,0.54].forEach((w,i)=>beep(i%2?740:988,0.15,0.6,"square",w)); try{navigator.vibrate&&navigator.vibrate([600,300,600])}catch(e){} };
-  pattern(); ringTimer=setInterval(pattern,1100);
+let ringStop=null;
+async function startRing(){
+  if(NATIVE){try{NB.startRing(S.alarmId||"",S.failMsg||"")}catch(e){}return}
+  stopRing();const a=curAlarm()||{};
+  const myToken={};startRing._tok=myToken;
+  const st=await playSound(a.sound||"beep",a.volume||80);
+  if(startRing._tok!==myToken){st();return}
+  ringStop=st;ringTimer=1;
+  try{navigator.vibrate&&navigator.vibrate([600,300,600,300,600,300,600])}catch(e){}
+  clearInterval(startRing._v);startRing._v=setInterval(()=>{try{navigator.vibrate&&navigator.vibrate([600,300,600])}catch(e){}},1800);
 }
-function stopRing(){if(NATIVE){try{NB.stopRing()}catch(e){} return}clearInterval(ringTimer);ringTimer=null;try{navigator.vibrate&&navigator.vibrate(0)}catch(e){}}
-function chime(){unlockAudio();beep(880,0.2,0.4,"sine");beep(1320,0.3,0.4,"sine",0.22)}
-function okSound(){beep(660,0.1,0.3,"sine");beep(990,0.15,0.3,"sine",0.1)}
-function badSound(){beep(180,0.25,0.4,"sawtooth")}
+function stopRing(){
+  if(NATIVE){try{NB.stopRing()}catch(e){}return}
+  startRing._tok=null;if(ringStop){ringStop();ringStop=null}ringTimer=null;clearInterval(startRing._v);
+  try{navigator.vibrate&&navigator.vibrate(0)}catch(e){}
+}
+function chime(){unlockAudio();tone(880,.2,.4,"sine");tone(1320,.3,.4,"sine",.22)}
+function okSound(){unlockAudio();tone(660,.1,.3,"sine");tone(990,.15,.3,"sine",.1)}
+function badSound(){unlockAudio();tone(180,.25,.4,"sawtooth")}
+function stopPreview(){
+  if(previewStop){previewStop();previewStop=null}clearTimeout(preview._t);
+  document.querySelectorAll("[data-prev].playing").forEach(x=>{x.classList.remove("playing");x.innerHTML=I.play});
+}
+async function preview(id,vol,btn){
+  const key=(btn?"b:":"v:")+id,was=!!previewStop&&preview._key===key;
+  stopPreview();if(was)return;
+  preview._key=key;
+  if(NATIVE){try{NB.preview(id,vol)}catch(e){}previewStop=()=>{try{NB.stopPreview()}catch(e){}}}
+  else previewStop=await playSound(id,vol);
+  if(btn){btn.classList.add("playing");btn.innerHTML=I.stop}
+  preview._t=setTimeout(stopPreview,5000);
+}
 
-async function getWakeLock(){try{if("wakeLock" in navigator){wakeLock=await navigator.wakeLock.request("screen")}}catch(e){}}
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&armed)getWakeLock()});
-
-/* ================= 대기 모드 ================= */
+async function getWakeLock(){try{if("wakeLock" in navigator)wakeLock=await navigator.wakeLock.request("screen")}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&armed&&!NATIVE)getWakeLock()});
 $("armBtn").onclick=async()=>{
   unlockAudio();
-  if(!armed){
-    armed=true; await getWakeLock();
-    try{ if("Notification" in window && Notification.permission==="default") await Notification.requestPermission(); }catch(e){}
-    await askMotion();
-    chime(); toast("대기 모드 켜짐 — 화면을 켜 둔 채로 두세요");
-  }else{ armed=false; try{wakeLock&&wakeLock.release()}catch(e){} }
+  if(!armed){armed=true;await getWakeLock();
+    try{if("Notification" in window&&Notification.permission==="default")await Notification.requestPermission()}catch(e){}
+    await askMotion();chime();toast("대기 모드 켜짐 — 화면을 켜 둔 채로 두세요");
+  }else{armed=false;try{wakeLock&&wakeLock.release()}catch(e){}}
   renderArm();
 };
 function renderArm(){
   $("armDot").classList.toggle("on",armed);
   $("armTxt").textContent=armed?"알람 대기 중":"알람 대기 꺼짐";
-  $("armBtn").textContent=armed?"대기 끄기":"대기 켜기";
-  $("armNote").textContent=armed?"이 화면을 닫거나 다른 앱으로 오래 나가면 알람이 늦거나 안 울릴 수 있어요. 충전기에 꽂아 두는 걸 추천해요.":"알람이 울리려면 대기 모드를 켜고 이 화면을 열어 두세요.";
+  $("armBtn").textContent=armed?"끄기":"대기 켜기";
+  $("armNote").textContent=armed?"이 화면을 열어 둔 채 충전기에 꽂아 두세요.":"웹에서는 이 화면이 열려 있어야 울려요. 앱을 쓰면 꺼져 있어도 울려요.";
 }
-async function askMotion(){
-  try{ if(typeof DeviceMotionEvent!=="undefined" && typeof DeviceMotionEvent.requestPermission==="function"){ await DeviceMotionEvent.requestPermission(); } }catch(e){}
-}
+async function askMotion(){try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function")await DeviceMotionEvent.requestPermission()}catch(e){}}
 
-/* ================= 알람 목록 ================= */
-function missionText(m){const d=MISSIONS[m.type];return `${d.icon} ${d.name} ${m.count}${d.param.includes("수")||d.param.includes("개수")?"개":d.param==="라운드"?"라운드":d.param}`}
-function renderList(){
-  const L=$("list");
-  if(!alarms.length){L.innerHTML='<div class="empty">알람이 없어요.<br>아래 버튼으로 추가해 보세요.</div>';return}
-  const sorted=[...alarms].sort((a,b)=>a.time.localeCompare(b.time));
-  L.innerHTML=sorted.map(a=>`
-   <div class="card"><div class="alarm ${a.on?"":"off"}">
-     <div class="info">
-       <div class="t">${a.time}</div>
-       <div class="lbl">${a.label||"알람"} · ${a.days.length?a.days.sort().map(d=>DAYN[d]).join(" "):"한 번"} · 제한 ${fmtSec(a.limit)}</div>
-       <div class="ms">${a.missions.map(missionText).join("<br>")||"미션 없음"}</div>
-     </div>
-     <button class="sw ${a.on?"on":""}" data-tog="${a.id}"></button>
-   </div>
-   <div class="row"><button data-edit="${a.id}">✏️ 편집</button><button data-test="${a.id}">▶ 지금 테스트</button></div></div>`).join("");
+/* ================================================================
+   알람 목록
+================================================================ */
+const DAYN=["일","월","화","수","목","금","토"];
+function nextTime(a){
+  const [h,m]=a.time.split(":").map(Number),now=new Date();
+  for(let d=0;d<=7;d++){const c=new Date(now);c.setDate(now.getDate()+d);c.setHours(h,m,0,0);if(c<=now)continue;if(!a.days.length||a.days.includes(c.getDay()))return c}
+  return null;
 }
-function fmtSec(s){return s>=60?(Math.floor(s/60)+"분"+(s%60?" "+s%60+"초":"")):s+"초"}
+function renderList(){
+  const L=$("list"),sorted=[...alarms].sort((a,b)=>a.time.localeCompare(b.time));
+  $("cnt").textContent=alarms.length?`${alarms.filter(a=>a.on).length} / ${alarms.length}개 켜짐`:"";
+  const ups=alarms.filter(a=>a.on).map(a=>nextTime(a)).filter(Boolean).sort((a,b)=>a-b);
+  if(ups.length){const t=ups[0],diff=t-Date.now(),hh=Math.floor(diff/3600000),mm=Math.floor(diff%3600000/60000);
+    $("nextV").innerHTML=`${hh?hh+"시간 ":""}${mm}분 후 <small>${t.getMonth()+1}/${t.getDate()}(${DAYN[t.getDay()]}) ${pad2(t.getHours())}:${pad2(t.getMinutes())}</small>`}
+  else $("nextV").innerHTML=`<span style="color:var(--sub);font-size:17px">켜진 알람이 없어요</span>`;
+  if(!alarms.length){L.innerHTML=`<div class="glass empty"><img src="logo.svg" alt=""><div style="font-weight:800;color:var(--txt);font-size:16px">아직 알람이 없어요</div><div style="margin-top:6px;font-size:13.5px">아래 <b>알람 추가</b>로 첫 미션 알람을 만들어 보세요</div></div>`;return}
+  L.innerHTML=sorted.map(a=>{const [h,m]=a.time.split(":").map(Number);return `
+   <div class="glass alarm ${a.on?"":"off"}">
+     <div class="row1"><div class="meta">
+       <div class="t"><small>${h<12?"오전":"오후"}</small>${pad2(h%12||12)}:${pad2(m)}</div>
+       <div class="lbl">${esc(a.label)||"알람"} <span class="sub" style="font-weight:600">· 제한 ${fmtSec(a.limit)}</span></div>
+       <div class="dayrow">${a.days.length?DAYN.map((d,i)=>`<i class="${a.days.includes(i)?"on":""}">${d}</i>`).join(""):'<span class="note">한 번만</span>'}</div>
+     </div><button class="sw ${a.on?"on":""}" data-tog="${a.id}" aria-label="켜기/끄기"></button></div>
+     <div class="mchips">${a.missions.map(m=>`<span class="mchip ${MISSIONS[m.type].kind==="body"?"body":""}">${I[m.type]}${MISSIONS[m.type].name} ${mDesc(m)}</span>`).join("")}
+       <span class="mchip snd">${I.music}${esc(soundName(a.sound||"system"))} · ${a.volume||80}%</span></div>
+     <div class="acts"><button data-edit="${a.id}">${I.edit}편집</button><button data-test="${a.id}">${I.bell}지금 울려보기</button></div>
+   </div>`}).join("");
+}
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtSec=s=>s>=60?(Math.floor(s/60)+"분"+(s%60?" "+s%60+"초":"")):s+"초";
 $("list").onclick=e=>{
   const t=e.target.closest("button");if(!t)return;
-  if(t.dataset.tog){const a=alarms.find(x=>x.id===t.dataset.tog);a.on=!a.on;a.lastFired=null;saveA();renderList()}
-  if(t.dataset.edit) openEditor(alarms.find(x=>x.id===t.dataset.edit));
+  if(t.dataset.tog){const a=alarms.find(x=>x.id===t.dataset.tog);a.on=!a.on;a.lastFired=null;saveA();renderList();if(a.on){const n=nextTime(a);n&&toast(`${Math.floor((n-Date.now())/3600000)}시간 ${Math.floor((n-Date.now())%3600000/60000)}분 후에 울려요`)}}
+  if(t.dataset.edit)openEditor(alarms.find(x=>x.id===t.dataset.edit));
   if(t.dataset.test){unlockAudio();askMotion();const a=alarms.find(x=>x.id===t.dataset.test);
     if(NATIVE){S={mode:"ringing",alarmId:a.id,snap:a};saveS();showRinging()}else fire(a)}
 };
+setInterval(()=>{if($("mainView").style.display!=="none"&&S.mode==="idle")renderList()},30000);
 
-/* ================= 편집기 ================= */
+/* ================================================================
+   편집기
+================================================================ */
 let ed=null;
+const LIMITS=[60,90,120,180,300,600];
 function openEditor(a){
-  ed=a?JSON.parse(JSON.stringify(a)):{id:"a"+Date.now(),time:"07:00",label:"",days:[],limit:120,on:true,missions:[{type:"math",count:3,level:2},{type:"squat",count:10}]};
-  $("edTitle").textContent=a?"알람 편집":"알람 추가";
+  ed=a?JSON.parse(JSON.stringify(a)):{id:"a"+Date.now(),time:"07:00",label:"",days:[1,2,3,4,5],limit:120,on:true,sound:NATIVE?"system":"beep",volume:80,
+    missions:[{type:"math",count:3,level:1},{type:"tiles",count:2,level:2},{type:"walk",count:30}]};
+  if(!ed.sound)ed.sound="system";if(!ed.volume)ed.volume=80;
+  $("edTitle").textContent=a?"알람 편집":"새 알람";
   $("edDelete").style.display=a?"":"none";
-  $("edTime").value=ed.time;$("edLabel").value=ed.label;$("edLimit").value=String(ed.limit);
-  renderEd();$("editor").classList.add("show");
+  $("edTime").value=ed.time;$("edLabel").value=ed.label||"";$("edVol").value=ed.volume;$("edVolV").textContent=ed.volume+"%";
+  renderEd();$("editor").classList.add("show");$("editor").querySelector(".sheet").scrollTop=0;
 }
 function renderEd(){
-  $("edDays").innerHTML=DAYN.map((d,i)=>`<button data-day="${i}" class="${ed.days.includes(i)?"on":""}">${d}</button>`).join("");
+  $("edDays").innerHTML=DAYN.map((d,i)=>`<button data-day="${i}" class="${ed.days.includes(i)?"on":""} ${i===0||i===6?"we":""}">${d}</button>`).join("");
+  $("edLimit").innerHTML=LIMITS.map(s=>`<button data-lim="${s}" class="${ed.limit===s?"on":""}">${fmtSec(s)}</button>`).join("");
+  const all=[...BUILTIN.map(s=>({...s,b:1})),...mySounds.map(s=>({...s,desc:"내 MP3 · "+(s.size/1048576).toFixed(1)+"MB"}))];
+  $("edSounds").innerHTML=all.map(s=>`<div class="srow ${ed.sound===s.id?"on":""}" data-snd="${s.id}"><span class="rb"></span><div class="nm">${esc(s.name)}<small>${esc(s.desc||"")}</small></div>
+     <button class="ib" data-prev="${s.id}">${I.play}</button>${s.b?"":`<button class="ib" data-sdel="${s.id}">${I.trash}</button>`}</div>`).join("")
+    +`<button class="srow add" id="sndAdd">${I.plus} MP3 파일로 알람음 추가</button>`;
   $("edMissions").innerHTML=ed.missions.length?ed.missions.map((m,i)=>{const d=MISSIONS[m.type];return `
-    <div class="mi"><span class="tag ${d.kind==="body"?"body":""}">${d.kind==="body"?"몸":"정신"}</span>
-      <span class="nm">${d.icon} ${d.name}</span>
-      ${d.level?`<select data-lv="${i}"><option value="1" ${m.level==1?"selected":""}>쉬움</option><option value="2" ${m.level==2?"selected":""}>보통</option><option value="3" ${m.level==3?"selected":""}>어려움</option></select>`:""}
-      <input type="number" inputmode="numeric" data-cnt="${i}" value="${m.count}" min="${d.min}" max="${d.max}"><span class="sub">${d.param}</span>
-      <button data-up="${i}">↑</button><button data-del="${i}">✕</button></div>`}).join(""):'<div class="sub" style="padding:8px">최소 1개의 미션을 넣어 주세요.</div>';
-  $("palette").innerHTML=Object.entries(MISSIONS).map(([k,d])=>`<button data-add="${k}"><b>${d.icon} ${d.name}</b><span class="tag ${d.kind==="body"?"body":""}">${d.kind==="body"?"몸 깨우기":"정신 깨우기"}</span></button>`).join("");
+    <div class="mi"><div class="badge ${d.kind==="body"?"body":""}">${I[m.type]}</div>
+      <div class="nm">${d.name}<small>${d.kind==="mind"?"정신 깨우기":"몸 깨우기"}${d.kind==="mind"?" · "+d.levels[(m.level||1)-1]:""}</small></div>
+      <button class="x" data-up="${i}" title="위로">${I.up}</button><button class="x" data-del="${i}" title="삭제">${I.x}</button>
+      <div class="ctl">${d.kind==="mind"?`<select data-lv="${i}">${LV.map((l,k)=>`<option value="${k+1}" ${(m.level||1)===k+1?"selected":""}>${l} · ${d.levels[k]}</option>`).join("")}</select>`:'<div style="flex:1;font-size:12.5px;color:var(--sub)">목표 횟수</div>'}
+        <div class="step"><button data-dec="${i}">−</button><input type="number" inputmode="numeric" data-cnt="${i}" value="${m.count}"><span>${d.unit}</span><button data-inc="${i}">+</button></div></div>
+    </div>`}).join(""):'<div class="note" style="padding:6px 2px">아래에서 미션을 1개 이상 골라 주세요.</div>';
+  const pal=k=>Object.entries(MISSIONS).filter(([,d])=>d.kind===k).map(([t,d])=>`<button data-add="${t}">${I[t]}${d.name}</button>`).join("");
+  $("palMind").innerHTML=pal("mind");$("palBody").innerHTML=pal("body");
 }
-$("editor").addEventListener("click",e=>{
-  const t=e.target.closest("button");if(!t)return;
+function stepVal(m,v){const d=MISSIONS[m.type];m.count=Math.max(d.min,Math.min(d.max,Math.round(v)||d.def))}
+$("editor").addEventListener("click",async e=>{
+  const t=e.target.closest("button,.srow");if(!t)return;
   if(t.dataset.day!==undefined){const d=+t.dataset.day;ed.days=ed.days.includes(d)?ed.days.filter(x=>x!==d):[...ed.days,d];renderEd()}
-  if(t.dataset.add){const d=MISSIONS[t.dataset.add];ed.missions.push({type:t.dataset.add,count:d.def,level:2});renderEd()}
-  if(t.dataset.del!==undefined){ed.missions.splice(+t.dataset.del,1);renderEd()}
-  if(t.dataset.up!==undefined){const i=+t.dataset.up;if(i>0){[ed.missions[i-1],ed.missions[i]]=[ed.missions[i],ed.missions[i-1]];renderEd()}}
+  else if(t.dataset.lim){ed.limit=+t.dataset.lim;renderEd()}
+  else if(t.dataset.add){const d=MISSIONS[t.dataset.add];ed.missions.push({type:t.dataset.add,count:d.def,level:1});renderEd();toast(d.name+" 추가됨")}
+  else if(t.dataset.del!==undefined){ed.missions.splice(+t.dataset.del,1);renderEd()}
+  else if(t.dataset.up!==undefined){const i=+t.dataset.up;if(i>0){[ed.missions[i-1],ed.missions[i]]=[ed.missions[i],ed.missions[i-1]];renderEd()}}
+  else if(t.dataset.dec!==undefined){const m=ed.missions[+t.dataset.dec],st=m.type==="walk"?10:1;stepVal(m,m.count-st);renderEd()}
+  else if(t.dataset.inc!==undefined){const m=ed.missions[+t.dataset.inc],st=m.type==="walk"?10:1;stepVal(m,m.count+st);renderEd()}
+  else if(t.dataset.prev){e.stopPropagation();preview(t.dataset.prev,ed.volume,t)}
+  else if(t.dataset.sdel){e.stopPropagation();delSound(t.dataset.sdel)}
+  else if(t.id==="sndAdd"){$("sndFile").click()}
+  else if(t.dataset.snd){ed.sound=t.dataset.snd;renderEd()}
 });
 $("editor").addEventListener("change",e=>{
   const t=e.target;
-  if(t.dataset.cnt!==undefined){const m=ed.missions[+t.dataset.cnt],d=MISSIONS[m.type];m.count=Math.max(d.min,Math.min(d.max,parseInt(t.value)||d.def));t.value=m.count}
-  if(t.dataset.lv!==undefined){ed.missions[+t.dataset.lv].level=+t.value}
+  if(t.dataset.cnt!==undefined){stepVal(ed.missions[+t.dataset.cnt],+t.value);renderEd()}
+  if(t.dataset.lv!==undefined){ed.missions[+t.dataset.lv].level=+t.value;renderEd()}
 });
-$("edCancel").onclick=()=>$("editor").classList.remove("show");
-$("edDelete").onclick=()=>{alarms=alarms.filter(a=>a.id!==ed.id);saveA();renderList();$("editor").classList.remove("show")};
+$("edVol").oninput=e=>{ed.volume=+e.target.value;$("edVolV").textContent=ed.volume+"%"};
+$("edVolTest").onclick=()=>preview(ed.sound,ed.volume,null);
+$("edCancel").onclick=()=>{stopPreview();$("editor").classList.remove("show")};
+$("edDelete").onclick=()=>{alarms=alarms.filter(a=>a.id!==ed.id);saveA();renderList();$("editor").classList.remove("show");toast("알람 삭제됨")};
 $("edSave").onclick=()=>{
   if(!ed.missions.length){toast("미션을 1개 이상 넣어 주세요");return}
-  ed.time=$("edTime").value||"07:00";ed.label=$("edLabel").value.trim();ed.limit=+$("edLimit").value;ed.on=true;ed.lastFired=null;
-  const i=alarms.findIndex(a=>a.id===ed.id); if(i>=0)alarms[i]=ed; else alarms.push(ed);
-  saveA();renderList();$("editor").classList.remove("show");toast(`${ed.time} 알람 저장됨`);
+  stopPreview();
+  ed.time=$("edTime").value||"07:00";ed.label=$("edLabel").value.trim();ed.on=true;ed.lastFired=null;
+  const i=alarms.findIndex(a=>a.id===ed.id);if(i>=0)alarms[i]=ed;else alarms.push(ed);
+  saveA();renderList();$("editor").classList.remove("show");
+  const n=nextTime(ed);toast(n?`${Math.floor((n-Date.now())/3600000)}시간 ${Math.floor((n-Date.now())%3600000/60000)}분 후에 울려요`:"저장됨");
 };
 $("addBtn").onclick=()=>openEditor(null);
 
-/* ================= 알람 시각 체크 ================= */
+/* ---------- MP3 올리기 / 삭제 ---------- */
+$("sndFile").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(f.size>8*1048576){toast("8MB 이하 파일만 올릴 수 있어요");return}
+  if(f.type&&!f.type.startsWith("audio/")){toast("음악 파일(mp3)만 올릴 수 있어요");return}
+  toast("⏫ 알람음 올리는 중…");
+  try{
+    const name=f.name.replace(/\.[^.]+$/,"").slice(0,60);
+    const s=await api("/api/sounds?name="+encodeURIComponent(name),{method:"POST",raw:true,headers:{"Content-Type":f.type||"audio/mpeg"},body:f});
+    await IDB.put(s.id,f);await nativeSave(s.id,f);
+    mySounds.push(s);LS.set("wa_sounds",mySounds);ed.sound=s.id;renderEd();toast("🎵 '"+s.name+"' 추가됨");
+  }catch(err){toast(err.message)}
+};
+async function delSound(id){
+  const s=mySounds.find(x=>x.id===id);if(!s)return;
+  if(!delSound._c||delSound._c!==id){delSound._c=id;toast("한 번 더 누르면 '"+s.name+"' 삭제");setTimeout(()=>delSound._c=null,2500);return}
+  try{await api("/api/sounds/"+id,{method:"DELETE"});await IDB.del(id);if(NATIVE){try{NB.deleteSound(id)}catch(e){}}
+    mySounds=mySounds.filter(x=>x.id!==id);LS.set("wa_sounds",mySounds);
+    alarms.forEach(a=>{if(a.sound===id)a.sound="system"});if(ed&&ed.sound===id)ed.sound="system";saveA();renderEd();renderList();toast("삭제됨")}
+  catch(e){toast(e.message)}
+}
+
+/* ================================================================
+   알람 시각 체크 (웹 전용 — 앱은 안드로이드가 직접 울림)
+================================================================ */
 setInterval(tick,1000);
 function tick(){
   const now=new Date();
@@ -390,219 +689,230 @@ function tick(){
     for(const a of alarms){
       if(!a.on||a.time!==hm||a.lastFired===key)continue;
       if(a.days.length&&!a.days.includes(now.getDay()))continue;
-      a.lastFired=key; if(!a.days.length)a.on=false; saveA(); renderList();
-      fire(a); break;
+      a.lastFired=key;if(!a.days.length)a.on=false;saveA();renderList();fire(a);break;
     }
   }
-  if(S.mode==="mission") missionTick();
-  if(S.mode==="waitcheck" && !NATIVE && Date.now()>=S.checkAt) startCheck();
-  if(S.mode==="checking") checkTick();
+  if(S.mode==="mission")missionTick();
+  if(S.mode==="waitcheck"&&!NATIVE&&Date.now()>=S.checkAt)startCheck();
+  if(S.mode==="checking")checkTick();
 }
-function curAlarm(){return alarms.find(a=>a.id===S.alarmId)||S.snap}
+const curAlarm=()=>alarms.find(a=>a.id===S.alarmId)||S.snap;
 
-/* ================= 잠금 화면 (닫기 방지) ================= */
+/* ================================================================
+   잠금 화면 (끄기 전엔 못 나감)
+================================================================ */
 const lock=$("lock");
-function lockOn(){
-  lock.classList.add("show");document.body.style.overflow="hidden";
-  try{ if(!document.fullscreenElement&&document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}) }catch(e){}
-}
-function lockOff(){lock.classList.remove("show");lock.innerHTML="";document.body.style.overflow="";try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}}
 const locked=()=>["ringing","mission","checking"].includes(S.mode);
+function lockOn(calm){lock.classList.add("show");lock.classList.toggle("calm",!!calm);document.body.style.overflow="hidden";
+  try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}}
+function lockOff(){lock.classList.remove("show");lock.innerHTML="";document.body.style.overflow="";try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}renderList()}
 window.addEventListener("beforeunload",e=>{if(locked()){e.preventDefault();e.returnValue="알람을 끄기 전에는 나갈 수 없어요!";return e.returnValue}});
 history.pushState({trap:1},"");window.addEventListener("popstate",()=>{history.pushState({trap:1},"");if(locked())toast("미션을 끝내기 전에는 나갈 수 없어요!")});
 document.addEventListener("keydown",e=>{if(locked()&&(e.key==="Escape"||e.key==="F5"||(e.ctrlKey&&["w","r"].includes(e.key.toLowerCase())))){e.preventDefault();toast("미션을 끝내야 꺼져요!")}},true);
 document.addEventListener("contextmenu",e=>{if(locked())e.preventDefault()});
-document.addEventListener("fullscreenchange",()=>{ if(locked()&&!document.fullscreenElement) toast("화면을 눌러 미션을 계속하세요") });
-lock.addEventListener("click",()=>{ if(locked()&&!document.fullscreenElement){try{document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}} },true);
-// 다른 앱으로 나갔다 돌아오면: 미션 중이었다면 그대로, 울림 중이면 계속 울림
-document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&S.mode==="ringing"&&!ringTimer) startRing() });
+lock.addEventListener("click",()=>{if(locked()&&!document.fullscreenElement&&!NATIVE){try{document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}}},true);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&S.mode==="ringing"&&!ringTimer&&!NATIVE)startRing()});
 
-/* ================= 알람 흐름 ================= */
+/* ================================================================
+   알람 흐름
+================================================================ */
 function fire(a){
   if(!a)return;
-  S={mode:"ringing",alarmId:a.id,snap:a};saveS();
-  showRinging();
-  try{ if("Notification" in window&&Notification.permission==="granted") new Notification("⏰ "+(a.label||"알람"),{body:"미션을 해야 알람이 꺼져요!",requireInteraction:true}) }catch(e){}
+  S={mode:"ringing",alarmId:a.id,snap:a};saveS();showRinging();
+  try{if("Notification" in window&&Notification.permission==="granted")new Notification("⏰ "+(a.label||"깨워알람"),{body:"미션을 해야 알람이 꺼져요!",requireInteraction:true})}catch(e){}
 }
 function showRinging(){
   S.mode="ringing";saveS();cleanupMission();lockOn();startRing();
-  const a=curAlarm(),now=new Date();
+  const a=curAlarm()||{missions:[],limit:120},now=new Date();
   lock.innerHTML=`
-   <div class="bigtime ring-anim">${pad2(now.getHours())}:${pad2(now.getMinutes())}</div>
-   <div style="font-size:20px;margin-top:6px">${a.label||"일어날 시간이에요!"}</div>
-   <div class="hint" style="margin-top:10px;text-align:center">미션 ${a.missions.length}개 · 제한 시간 ${fmtSec(a.limit)}<br>${a.missions.map(m=>MISSIONS[m.type].icon).join(" ")}</div>
-   ${S.failMsg?`<div style="color:var(--bad);margin-top:12px;font-weight:700">${S.failMsg}</div>`:""}
+   <svg class="ring-ico" viewBox="0 0 24 24" style="stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="13" r="7"/><path d="M12 9.5V13l2.5 1.5M5 4 2.5 6.5M19 4l2.5 2.5"/></svg>
+   <div class="bigtime">${pad2(now.getHours())}:${pad2(now.getMinutes())}</div>
+   <div class="lk-label">${esc(a.label)||"일어날 시간이에요!"}</div>
+   <div class="lk-info">${a.missions.map(m=>`<span class="mchip" style="background:#0005">${I[m.type]}${MISSIONS[m.type].name} ${mDesc(m)}</span>`).join("")}</div>
+   <div class="lk-info"><span class="mchip" style="background:#0005">⏱ 제한 ${fmtSec(a.limit)}</span><span class="mchip" style="background:#0005">🔒 소리 ${a.volume||80}% 고정</span></div>
+   ${S.failMsg?`<div class="lk-fail">${esc(S.failMsg)}</div>`:""}
    <button class="startbtn" id="goBtn">미션<br>시작</button>
-   <div class="hint" style="margin-top:28px;text-align:center">미션 중에는 소리가 멈춰요.<br>시간 안에 전부 못 끝내면 다시 울리고 처음부터예요.</div>`;
+   <div class="lk-hint">미션 중에는 소리가 멈춰요.<br>시간 안에 다 못 끝내면 다시 울리고 처음부터예요.</div>`;
   $("goBtn").onclick=()=>{unlockAudio();askMotion();startMissions()};
 }
 function startMissions(){
   stopRing();
-  S.mode="mission";S.idx=0;S.deadline=Date.now()+curAlarm().limit*1000;S.failMsg="";saveS();
+  S.mode="mission";S.idx=0;S.deadline=Date.now()+(curAlarm().limit||120)*1000;S.failMsg="";saveS();
   runMission();
 }
 function missionTick(){
-  const left=Math.max(0,Math.ceil((S.deadline-Date.now())/1000)),a=curAlarm();
+  const a=curAlarm(),left=Math.max(0,Math.ceil((S.deadline-Date.now())/1000));
   const tEl=$("tLeft"),bEl=$("tBar");
   if(tEl){tEl.textContent=`${Math.floor(left/60)}:${pad2(left%60)}`;tEl.classList.toggle("warn",left<=10)}
   if(bEl)bEl.style.width=(left/a.limit*100)+"%";
-  if(left<=10&&left>0)beep(1200,0.05,0.15,"sine");
+  if(left<=10&&left>0){unlockAudio();tone(1200,.05,.15,"sine")}
   if(left<=0){S.failMsg="⏱ 시간 초과! 처음부터 다시 해야 해요.";showRinging()}
 }
 let cleanupFn=null;
 function cleanupMission(){if(cleanupFn){try{cleanupFn()}catch(e){}cleanupFn=null}}
 function runMission(){
-  cleanupMission();
+  cleanupMission();lock.classList.add("calm");
   const a=curAlarm();
   if(S.idx>=a.missions.length){allDone();return}
   const m=a.missions[S.idx],d=MISSIONS[m.type];
   lock.innerHTML=`
-   <div class="topbar"><span>미션 ${S.idx+1} / ${a.missions.length}</span><span class="timer" id="tLeft">--</span></div>
+   <div class="mtop"><span class="k">미션 ${S.idx+1} / ${a.missions.length}</span><span class="timer" id="tLeft">--</span></div>
    <div class="tbar"><i id="tBar" style="width:100%"></i></div>
    <div class="steps">${a.missions.map((_,i)=>`<i class="${i<S.idx?"d":i===S.idx?"c":""}"></i>`).join("")}</div>
    <div class="mbox" id="mbox"></div>`;
   missionTick();
-  const box=$("mbox");
-  const next=()=>{okSound();cleanupMission();S.idx++;saveS();setTimeout(()=>{if(S.mode==="mission")runMission()},350)};
-  cleanupFn=RUNNERS[m.type](box,m,d,next)||null;
+  const next=()=>{okSound();cleanupMission();S.idx++;saveS();setTimeout(()=>{if(S.mode==="mission")runMission()},380)};
+  cleanupFn=RUNNERS[m.type]($("mbox"),m,d,next)||null;
 }
 function allDone(){
   cleanupMission();
-  const mins=1+Math.random()*4; // 1~5분
+  const mins=1+Math.random()*4; // 1~5분 사이 랜덤
   S.mode="waitcheck";S.checkAt=Date.now()+Math.round(mins*60000);saveS();
-  if(NATIVE){try{NB.missionDone(Math.round(mins*60000))}catch(e){}} else stopRing();
-  lock.innerHTML=`<div class="check"><div style="font-size:70px">🌞</div><h2>미션 성공!</h2><div class="hint">좋은 아침이에요.<br>잠시 후 정말 깼는지 한 번 더 확인할게요.<br>이 화면은 열어 두세요.</div></div>`;
-  setTimeout(()=>{if(S.mode==="waitcheck")lockOff()},2500);
+  if(NATIVE){try{NB.missionDone(Math.round(mins*60000))}catch(e){}}else stopRing();
+  lock.innerHTML=`<div class="check"><img src="logo.svg" style="width:96px;border-radius:28px" alt=""><h2>미션 성공!</h2><div class="hint">좋은 아침이에요 🌞<br>잠시 후 정말 깼는지 한 번 더 물어볼게요.</div></div>`;
+  setTimeout(()=>{if(S.mode==="waitcheck")lockOff()},2600);
 }
 
-/* ================= 완전히 깨어났나요? ================= */
+/* ---------- 완전히 깨어났나요? ---------- */
 function startCheck(endAt){
-  S.mode="checking";S.checkEnd=endAt||Date.now()+10000;saveS();lockOn();
-  if(!NATIVE){
-    for(let i=0;i<3;i++)setTimeout(chime,i*400);
-    try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
-    try{ if("Notification" in window&&Notification.permission==="granted") new Notification("완전히 깨어났나요?",{body:"10초 안에 '예'를 누르지 않으면 알람이 다시 울려요!",requireInteraction:true}) }catch(e){}
-  }
-  lock.innerHTML=`<div class="check"><h2>완전히 깨어났나요?</h2><div class="cd" id="cd">10</div><button class="yes" id="yesBtn">예!</button><div class="hint" style="margin-top:16px">10초 안에 누르지 않으면<br>알람이 다시 울리고 미션도 처음부터예요.</div></div>`;
+  S.mode="checking";S.checkEnd=endAt||Date.now()+10000;saveS();lockOn(true);
+  if(!NATIVE){for(let i=0;i<3;i++)setTimeout(chime,i*400);try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
+    try{if("Notification" in window&&Notification.permission==="granted")new Notification("완전히 깨어났나요?",{body:"10초 안에 '예'를 누르지 않으면 알람이 다시 울려요!",requireInteraction:true})}catch(e){}}
+  lock.innerHTML=`<div class="check"><div style="font-size:54px">🤔</div><h2>완전히 깨어났나요?</h2><div class="hint">10초 안에 누르지 않으면 알람이 다시 울려요</div>
+    <div class="cdring"><svg viewBox="0 0 100 100" width="150" height="150" style="transform:rotate(-90deg)"><circle cx="50" cy="50" r="44" stroke="#ffffff1a" stroke-width="8" fill="none"/><circle id="cdArc" cx="50" cy="50" r="44" stroke="url(#gg)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/><defs><linearGradient id="gg"><stop offset="0" stop-color="#FFD36E"/><stop offset="1" stop-color="#FF4D8D"/></linearGradient></defs></svg><b id="cd">10</b></div>
+    <button class="yes" id="yesBtn">예, 깼어요!</button></div>`;
   $("yesBtn").onclick=()=>{if(NATIVE){try{NB.checkYes()}catch(e){}}checkOk()};
+  checkTick();
 }
-function checkOk(){okSound();S={mode:"idle"};saveS();lockOff();toast("오늘 하루도 화이팅! 알람 종료")}
+function checkOk(){okSound();S={mode:"idle"};saveS();lockOff();toast("오늘 하루도 화이팅! ☀️")}
 function checkTick(){
-  const left=Math.ceil((S.checkEnd-Date.now())/1000);const c=$("cd");if(c)c.textContent=Math.max(0,left);
-  if(left>0&&!NATIVE)beep(1000,0.06,0.25,"sine");
+  const left=Math.max(0,Math.ceil((S.checkEnd-Date.now())/1000));const c=$("cd");if(c)c.textContent=left;
+  const arc=$("cdArc");if(arc)arc.style.strokeDashoffset=276.5*(1-left/10);
+  if(left>0&&!NATIVE){unlockAudio();tone(1000,.06,.25,"sine")}
   if(left<=0&&!NATIVE){S.failMsg="😴 확인을 안 눌렀어요! 다시 미션 시작!";showRinging()}
 }
-/* ----- 안드로이드 → 웹 이벤트 ----- */
+
+/* ---------- 안드로이드 → 웹 ---------- */
 window.onNative=function(ev,a,b){
   if(!token)return;
   if(ev==="ring"){
-    if(S.mode==="mission"&&S.alarmId===a)return; // 이미 미션 중
+    if(S.mode==="mission"&&S.alarmId===a)return;
     const al=alarms.find(x=>x.id===a);
-    S={mode:"ringing",alarmId:a,snap:al||S.snap||{label:"알람",missions:[{type:"math",count:3,level:2}],limit:120},failMsg:b||""};
+    S={mode:"ringing",alarmId:a,snap:al||S.snap||{label:"알람",missions:[{type:"math",count:3,level:1}],limit:120,volume:80},failMsg:b||""};
     if(al&&!al.days.length&&al.on){al.on=false;saveA();renderList()}
     showRinging();
-  }else if(ev==="check"){ startCheck(Number(a)||Date.now()+10000) }
-  else if(ev==="checkok"){ if(S.mode==="checking"||S.mode==="waitcheck")checkOk() }
-  else if(ev==="perm"){ renderNative() }
+  }else if(ev==="check")startCheck(Number(a)||Date.now()+10000);
+  else if(ev==="checkok"){if(S.mode==="checking"||S.mode==="waitcheck")checkOk()}
+  else if(ev==="perm")renderNative();
 };
 
-/* ================= 미션: 수학 ================= */
-function rnd(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+/* ================================================================
+   미션
+================================================================ */
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+// 자연수 덧셈만: 난이도가 오를수록 더하는 수의 개수와 자릿수가 늘어남
 function makeMath(lv){
-  if(lv==1){const a=rnd(12,89),b=rnd(12,89);return Math.random()<.5||a<b?[`${a} + ${b}`,a+b]:[`${a} − ${b}`,a-b]}
-  if(lv==2){const a=rnd(3,12),b=rnd(6,19),c=rnd(10,99);return Math.random()<.5?[`${a} × ${b} + ${c}`,a*b+c]:[`${a} × ${b} − ${Math.min(c,a*b)}`,a*b-Math.min(c,a*b)]}
-  const a=rnd(11,29),b=rnd(6,19),c=rnd(3,9),d=rnd(3,9);return [`${a} × ${b} − ${c} × ${d}`,a*b-c*d];
+  const cfg=[[2,1],[2,2],[3,2],[4,3]][(lv||1)-1];
+  const lo=cfg[1]===1?1:10**(cfg[1]-1),hi=10**cfg[1]-1;
+  const ns=Array.from({length:cfg[0]},()=>rnd(lo,hi));
+  return [ns.join(" + "),ns.reduce((x,y)=>x+y,0)];
 }
 const RUNNERS={};
 RUNNERS.math=(box,m,d,next)=>{
   let solved=0,cur,ans="";
-  const draw=()=>{cur=makeMath(m.level||2);ans="";
-    box.innerHTML=`<div class="mtitle">🧮 수학 암산 (${solved+1}/${m.count})</div><div class="q" id="q">${cur[0]} = ?</div><div class="ans" id="ans">&nbsp;</div>
-    <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button data-n="del">⌫</button><button data-n="0">0</button><button data-n="ok" style="background:var(--acc);color:#2a1a00">확인</button></div>`;
+  const draw=()=>{cur=makeMath(m.level);ans="";
+    box.innerHTML=`<div class="mtitle">${I.math}수학 암산 ${solved+1} / ${m.count}</div><div class="q">${cur[0]} = ?</div><div class="ans" id="ans">&nbsp;</div>
+    <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button data-n="del">⌫</button><button data-n="0">0</button><button data-n="ok" class="ok">확인</button></div>`;
     box.querySelector(".pad").onclick=e=>{const b=e.target.closest("button");if(!b)return;const n=b.dataset.n;
-      if(n==="del")ans=ans.slice(0,-1);else if(n==="ok"){
-        if(+ans===cur[1]&&ans!==""){solved++;if(solved>=m.count)return next();okSound();draw();return}
-        badSound();$("ans").classList.add("shakeX");setTimeout(()=>{const x=$("ans");x&&x.classList.remove("shakeX")},300);ans="";
+      if(n==="del")ans=ans.slice(0,-1);
+      else if(n==="ok"){
+        if(ans!==""&&+ans===cur[1]){solved++;if(solved>=m.count)return next();okSound();draw();return}
+        badSound();const x=$("ans");x.classList.add("shakeX");setTimeout(()=>x.classList.remove("shakeX"),300);ans="";
       }else if(ans.length<6)ans+=n;
       $("ans").innerHTML=ans||"&nbsp;"};
   };draw();
 };
-/* ================= 미션: 타일 기억 ================= */
 RUNNERS.tiles=(box,m,d,next)=>{
   let round=0,timers=[];
+  const size=(m.level||1)+2,k={3:3,4:5,5:7,6:9}[size],N=size*size;
   const play=()=>{
-    const size=round<2?4:5,k=Math.min(4+round,size*size-4),N=size*size;
     const set=new Set();while(set.size<k)set.add(rnd(0,N-1));
     let found=0,phase="show";
-    box.innerHTML=`<div class="mtitle">🟦 타일 기억하기 (${round+1}/${m.count})</div><div class="hint" id="th">파란 타일 ${k}개의 위치를 기억하세요!</div>
+    box.innerHTML=`<div class="mtitle">${I.tiles}타일 기억 ${round+1} / ${m.count}</div><div class="hint" id="th" style="margin-top:12px">빛나는 타일 <b>${k}개</b>의 위치를 기억하세요!</div>
      <div class="grid" style="grid-template-columns:repeat(${size},1fr)">${Array.from({length:N},(_,i)=>`<button data-i="${i}" class="${set.has(i)?"lit":""}"></button>`).join("")}</div>`;
-    timers.push(setTimeout(()=>{phase="pick";box.querySelectorAll(".grid button").forEach(b=>b.classList.remove("lit"));const h=$("th");if(h)h.textContent="기억한 타일을 모두 누르세요"},1800+k*150));
+    timers.push(setTimeout(()=>{phase="pick";box.querySelectorAll(".grid button").forEach(b=>b.classList.remove("lit"));const h=$("th");if(h)h.innerHTML="기억한 타일을 <b>모두</b> 누르세요"},1400+k*220));
     box.querySelector(".grid").onclick=e=>{const b=e.target.closest("button");if(!b||phase!=="pick"||b.classList.contains("hit"))return;
       const i=+b.dataset.i;
-      if(set.has(i)){b.classList.add("hit");beep(800,0.06,0.2,"sine");if(++found===k){round++;if(round>=m.count)return next();okSound();timers.push(setTimeout(play,500))}}
-      else{phase="x";b.classList.add("miss");badSound();box.querySelectorAll(".grid button").forEach(x=>{if(set.has(+x.dataset.i))x.classList.add("lit")});
+      if(set.has(i)){b.classList.add("hit");unlockAudio();tone(700+found*60,.06,.2,"sine");if(++found===k){round++;if(round>=m.count)return next();okSound();timers.push(setTimeout(play,550))}}
+      else{phase="x";b.classList.add("miss");badSound();box.querySelectorAll(".grid button").forEach(x=>{if(set.has(+x.dataset.i)&&!x.classList.contains("hit"))x.classList.add("lit")});
         const h=$("th");if(h)h.textContent="틀렸어요! 새 문제로 다시";timers.push(setTimeout(play,1300))}
     };
   };play();return()=>timers.forEach(clearTimeout);
 };
-/* ================= 미션: 숫자 순서 ================= */
 RUNNERS.order=(box,m,d,next)=>{
-  const n=m.count,cols=n<=9?3:n<=16?4:5;
+  const size=(m.level||1)+2,n=size*size;let round=0;
   const draw=()=>{let want=1;const nums=Array.from({length:n},(_,i)=>i+1).sort(()=>Math.random()-.5);
-    box.innerHTML=`<div class="mtitle">🔢 1부터 ${n}까지 순서대로!</div><div class="hint" id="oh">다음: 1 · 틀리면 처음부터</div>
-     <div class="grid" style="grid-template-columns:repeat(${cols},1fr)">${nums.map(x=>`<button data-v="${x}">${x}</button>`).join("")}</div>`;
+    box.innerHTML=`<div class="mtitle">${I.order}숫자 순서 ${round+1} / ${m.count}</div><div class="hint" id="oh" style="margin-top:12px">1부터 ${n}까지 순서대로! 다음: <b>1</b></div>
+     <div class="grid" style="grid-template-columns:repeat(${size},1fr)">${nums.map(x=>`<button data-v="${x}">${x}</button>`).join("")}</div><div class="note">틀리면 그 판을 처음부터</div>`;
     box.querySelector(".grid").onclick=e=>{const b=e.target.closest("button");if(!b||b.classList.contains("done"))return;
-      if(+b.dataset.v===want){b.classList.add("done");beep(500+want*30,0.05,0.2,"sine");want++;if(want>n)return next();$("oh").textContent=`다음: ${want} · 틀리면 처음부터`}
-      else{badSound();b.classList.add("miss");setTimeout(draw,500)}};
+      if(+b.dataset.v===want){b.classList.add("done");unlockAudio();tone(500+want*18,.05,.2,"sine");want++;
+        if(want>n){round++;if(round>=m.count)return next();okSound();setTimeout(draw,400);return}
+        $("oh").innerHTML=`1부터 ${n}까지 순서대로! 다음: <b>${want}</b>`}
+      else{badSound();b.classList.add("miss");setTimeout(draw,450)}};
   };draw();
 };
-/* ================= 미션: 센서 (스쿼트/걷기/흔들기) ================= */
 function sensorMission(box,m,d,next,cfg){
-  let count=0,state=0,last=0,got=false,f=9.8,base=9.8;
-  box.innerHTML=`<div class="mtitle">${d.icon} ${d.name}</div><div class="counter" id="cnt">0</div><div style="font-size:20px;color:var(--sub)">/ ${m.count} ${d.param}</div>
-   <div class="tbar" style="margin:18px auto"><i id="pb" style="width:0%;background:var(--ok)"></i></div><div class="hint">${cfg.hint}</div><div id="fb"></div>`;
-  const bump=()=>{count++;$("cnt").textContent=count;$("pb").style.width=(count/m.count*100)+"%";beep(600+((count%5)*80),0.07,0.3,"sine");try{navigator.vibrate&&navigator.vibrate(40)}catch(e){};if(count>=m.count){done=true;next()}};
-  let done=false;
+  let count=0,state=0,last=0,got=false,f=9.8,base=9.8,done=false;
+  const C=2*Math.PI*96;
+  box.innerHTML=`<div class="mtitle">${I[m.type]}${d.name}</div>
+   <div class="ring"><svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="96" stroke="#ffffff14" stroke-width="14" fill="none"/>
+     <circle id="pArc" cx="110" cy="110" r="96" stroke="url(#pg)" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" style="transition:stroke-dashoffset .25s"/>
+     <defs><linearGradient id="pg"><stop offset="0" stop-color="#5BF0B8"/><stop offset="1" stop-color="#7C9CFF"/></linearGradient></defs></svg>
+     <div class="in"><b id="cnt">0</b><span>/ ${m.count} ${d.unit}</span></div></div>
+   <div class="hint" style="margin-top:18px">${cfg.hint}</div><div id="fb"></div>`;
+  const bump=()=>{count++;$("cnt").textContent=count;$("pArc").style.strokeDashoffset=C*(1-count/m.count);unlockAudio();tone(600+((count%5)*80),.07,.3,"sine");
+    try{navigator.vibrate&&navigator.vibrate(40)}catch(e){};if(count>=m.count){done=true;next()}};
   const h=e=>{
     const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;got=true;if(done)return;
     const mag=Math.sqrt(g.x*g.x+g.y*g.y+g.z*g.z);
-    f=f*0.6+mag*0.4; base=base*0.98+mag*0.02; const dv=f-base, now=Date.now();
-    if(cfg.type==="shake"){ if(mag>cfg.hi&&now-last>cfg.gap){last=now;bump()} return }
-    if(state===0&&dv<-cfg.lo){state=1}
+    f=f*.6+mag*.4;base=base*.98+mag*.02;const dv=f-base,now=Date.now();
+    if(cfg.type==="shake"){if(mag>cfg.hi&&now-last>cfg.gap){last=now;bump()}return}
+    if(state===0&&dv<-cfg.lo)state=1;
     else if(state===1&&dv>cfg.up&&now-last>cfg.gap){state=0;last=now;bump()}
-    if(state===1&&now-last>4000&&dv>-0.5)state=0;
+    if(state===1&&now-last>4000&&dv>-.5)state=0;
   };
   window.addEventListener("devicemotion",h);
-  const fbT=setTimeout(()=>{ if(got||done)return; const fb=$("fb");if(!fb)return;
-    const tapN=Math.max(20,Math.round(m.count*(cfg.type==="walk"?0.6:2)));
-    fb.innerHTML=`<div class="card" style="margin-top:18px"><div class="hint">⚠️ 이 기기에서 움직임 센서를 읽을 수 없어요.<br>대신 아래 버튼을 ${tapN}번 누르세요.</div><button class="pri" id="tapB" style="margin-top:10px;width:100%;padding:18px">눌러! (<span id="tapC">0</span>/${tapN})</button></div>`;
-    let t=0;$("tapB").onclick=()=>{t++;$("tapC").textContent=t;beep(700,0.03,0.2,"sine");if(t>=tapN)next()};
+  const fbT=setTimeout(()=>{if(got||done)return;const fb=$("fb");if(!fb)return;
+    const tapN=Math.max(20,Math.round(m.count*(cfg.type==="walk"?.6:2)));
+    fb.innerHTML=`<div class="glass" style="margin-top:18px;padding:16px"><div class="hint">⚠️ 이 기기에서 움직임 센서를 읽을 수 없어요.<br>대신 아래 버튼을 ${tapN}번 누르세요.</div><button class="btn pri" id="tapB" style="margin-top:10px;width:100%;padding:18px">눌러! (<span id="tapC">0</span>/${tapN})</button></div>`;
+    let t=0;$("tapB").onclick=()=>{t++;$("tapC").textContent=t;unlockAudio();tone(700,.03,.2,"sine");if(t>=tapN)next()};
   },3500);
   return()=>{window.removeEventListener("devicemotion",h);clearTimeout(fbT)};
 }
 RUNNERS.squat=(box,m,d,next)=>sensorMission(box,m,d,next,{type:"squat",lo:1.6,up:1.8,gap:1100,hint:"폰을 가슴에 꼭 붙여 들고<br>천천히 앉았다 일어나세요."});
-RUNNERS.walk=(box,m,d,next)=>sensorMission(box,m,d,next,{type:"walk",lo:0.9,up:1.1,gap:300,hint:"폰을 손에 들고 걸으세요.<br>제자리걸음보다 실제로 걸어 다니는 게 정확해요."});
+RUNNERS.walk=(box,m,d,next)=>sensorMission(box,m,d,next,{type:"walk",lo:.9,up:1.1,gap:300,hint:"폰을 손에 들고 걸어 다니세요.<br>제자리걸음보다 실제로 걷는 게 정확해요."});
 RUNNERS.shake=(box,m,d,next)=>sensorMission(box,m,d,next,{type:"shake",hi:22,gap:220,hint:"폰을 꽉 쥐고 세게 흔드세요!"});
 
-/* ================= 시작 시 상태 복구 ================= */
+/* ================================================================
+   시작
+================================================================ */
 function restore(){
-  initAuthUI();
+  initUI();
   if(!token){S={mode:"idle"};saveS();showAuth();return}
   showMain();
   if(NATIVE){
     let p={};try{p=JSON.parse(NB.getPending()||"{}")}catch(e){}
     if(p.mode==="ring"||p.mode==="mission"){S.mode="idle";window.onNative("ring",p.alarmId,p.mode==="mission"?"🔁 앱을 나갔다 왔네요. 처음부터 다시!":(p.msg||""))}
-    else if(p.mode==="check"){startCheck(p.checkEnd)}
+    else if(p.mode==="check")startCheck(p.checkEnd);
     else if(p.mode==="wait"){S.mode="waitcheck";saveS()}
     else if(S.mode!=="idle"){S={mode:"idle"};saveS()}
     return;
   }
-  if(S.mode==="ringing"||S.mode==="mission"||S.mode==="checking"){
-    // 새로고침/재접속으로 도망가도 다시 처음부터
+  if(locked()){
     S.failMsg="🔁 화면을 나갔다 왔네요. 처음부터 다시!";S.mode="ringing";saveS();
-    lockOn();lock.innerHTML=`<div class="check"><h2>알람이 아직 꺼지지 않았어요</h2><button class="startbtn" id="resume" style="animation:none">눌러서<br>계속</button></div>`;
+    lockOn();lock.innerHTML=`<div class="check"><h2>알람이 아직 안 꺼졌어요</h2><button class="startbtn" id="resume" style="animation:none">눌러서<br>계속</button></div>`;
     $("resume").onclick=()=>{unlockAudio();armed=true;renderArm();getWakeLock();showRinging()};
-  }else if(S.mode==="waitcheck"){ /* tick이 시간 되면 확인 창을 띄움 */ }
+  }
 }
 restore();
 </script>

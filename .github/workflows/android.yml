@@ -24,7 +24,7 @@ jobs:
           gradle-version: "8.9"
 
       - name: 웹 화면을 앱에 넣기
-        run: cp public/index.html android/app/src/main/assets/index.html
+        run: cp public/index.html public/logo.svg android/app/src/main/assets/
 
       - name: APK 빌드
         run: gradle -p android assembleRelease -Pvc=${{ github.run_number }} --stacktrace

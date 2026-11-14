@@ -15,7 +15,9 @@ import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -24,11 +26,16 @@ import android.widget.Toast;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+
 public class MainActivity extends Activity {
     static volatile boolean visible = false;
     static MainActivity instance;
     WebView web;
     boolean pageReady = false;
+    ValueCallback<Uri[]> fileCb;
+    SoundPlayer previewPlayer;
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
@@ -49,7 +56,20 @@ public class MainActivity extends Activity {
         s.setAllowUniversalAccessFromFileURLs(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         web.addJavascriptInterface(new Bridge(), "AndroidAlarm");
-        web.setWebChromeClient(new WebChromeClient());
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams params) {
+                if (fileCb != null) fileCb.onReceiveValue(null);
+                fileCb = cb;
+                try {
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("audio/*");
+                    startActivityForResult(Intent.createChooser(i, "알람음 파일 선택"), 77);
+                } catch (Exception e) { fileCb = null; return false; }
+                return true;
+            }
+        });
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView v, String url) { pageReady = true; }
             @Override public boolean shouldOverrideUrlLoading(WebView v, String url) {
@@ -83,7 +103,11 @@ public class MainActivity extends Activity {
         callJs("perm", "", "");
     }
 
-    @Override protected void onPause() { super.onPause(); visible = false; }
+    @Override protected void onPause() {
+        super.onPause();
+        visible = false;
+        if (previewPlayer != null) previewPlayer.stop();
+    }
 
     @Override protected void onDestroy() { if (instance == this) instance = null; visible = false; super.onDestroy(); }
 
@@ -101,6 +125,26 @@ public class MainActivity extends Activity {
     @Override public boolean onKeyDown(int code, KeyEvent e) {
         if (Store.isLocked(this) && (code == KeyEvent.KEYCODE_BACK)) return true;
         return super.onKeyDown(code, e);
+    }
+
+    @Override protected void onActivityResult(int rc, int res, Intent data) {
+        super.onActivityResult(rc, res, data);
+        if (rc == 77 && fileCb != null) {
+            Uri[] r = null;
+            if (res == RESULT_OK && data != null && data.getData() != null) r = new Uri[]{data.getData()};
+            fileCb.onReceiveValue(r);
+            fileCb = null;
+        }
+    }
+
+    /* 알람·미션 중에는 볼륨 버튼을 막음 (소리 크기 고정) */
+    @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        int k = e.getKeyCode();
+        if (Store.isLocked(this) && (k == KeyEvent.KEYCODE_VOLUME_UP || k == KeyEvent.KEYCODE_VOLUME_DOWN || k == KeyEvent.KEYCODE_VOLUME_MUTE)) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN) Toast.makeText(this, "🔒 알람 소리 크기는 바꿀 수 없어요", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        return super.dispatchKeyEvent(e);
     }
 
     @Override public void onRequestPermissionsResult(int rc, String[] p, int[] r) { callJs("perm", "", ""); }
@@ -149,6 +193,33 @@ public class MainActivity extends Activity {
             i.putExtra("delay", Math.max(5000, delayMs));
             svc(AlarmService.ACTION_WAIT, i);
             runOnUiThread(() -> getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
+        }
+
+        @JavascriptInterface public void saveSound(String id, String b64) {
+            try (FileOutputStream o = new FileOutputStream(SoundPlayer.soundFile(MainActivity.this, id))) {
+                o.write(Base64.decode(b64, Base64.DEFAULT));
+            } catch (Exception ignored) { }
+        }
+
+        @JavascriptInterface public boolean hasSound(String id) {
+            File f = SoundPlayer.soundFile(MainActivity.this, id);
+            return f.exists() && f.length() > 0;
+        }
+
+        @JavascriptInterface public void deleteSound(String id) {
+            try { SoundPlayer.soundFile(MainActivity.this, id).delete(); } catch (Exception ignored) { }
+        }
+
+        @JavascriptInterface public void preview(String id, int vol) {
+            runOnUiThread(() -> {
+                if (Store.isLocked(MainActivity.this)) return;
+                if (previewPlayer == null) previewPlayer = new SoundPlayer(MainActivity.this);
+                previewPlayer.start(id, vol, false);
+            });
+        }
+
+        @JavascriptInterface public void stopPreview() {
+            runOnUiThread(() -> { if (previewPlayer != null) previewPlayer.stop(); });
         }
 
         @JavascriptInterface public void checkYes() { svc(AlarmService.ACTION_YES, null); }

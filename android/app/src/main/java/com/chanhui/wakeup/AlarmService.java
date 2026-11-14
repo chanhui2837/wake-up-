@@ -10,10 +10,7 @@ import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.RingtoneManager;
 import android.media.ToneGenerator;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -21,7 +18,6 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.provider.Settings;
 
 import org.json.JSONObject;
 
@@ -39,8 +35,7 @@ public class AlarmService extends Service {
     static final int NID_FG = 1, NID_CHECK = 2;
 
     final Handler h = new Handler(Looper.getMainLooper());
-    MediaPlayer player;
-    ToneGenerator tone;
+    SoundPlayer sp;
     Vibrator vib;
     PowerManager.WakeLock wl;
     String mode = "";
@@ -53,6 +48,7 @@ public class AlarmService extends Service {
     public void onCreate() {
         super.onCreate();
         vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        sp = new SoundPlayer(this);
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "wakeup:alarm");
         wl.acquire(60 * 60 * 1000L);
@@ -251,27 +247,20 @@ public class AlarmService extends Service {
 
     /* ---------- 소리 / 진동 ---------- */
     void playSound() {
-        if (player != null && player.isPlaying()) return;
-        stopSound();
+        if (sp.playing()) return;
+        String sound = "system";
+        int vol = 80;
         try {
-            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            am.setStreamVolume(AudioManager.STREAM_ALARM, am.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0);
+            org.json.JSONArray arr = new org.json.JSONArray(Store.alarms(this));
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject a = arr.getJSONObject(i);
+                if (alarmId != null && alarmId.equals(a.optString("id"))) {
+                    sound = a.optString("sound", "system");
+                    vol = a.optInt("volume", 80);
+                }
+            }
         } catch (Exception ignored) { }
-        try {
-            Uri u = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM);
-            if (u == null) u = Settings.System.DEFAULT_ALARM_ALERT_URI;
-            if (u == null) u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            player = new MediaPlayer();
-            player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
-            player.setDataSource(this, u);
-            player.setLooping(true);
-            player.prepare();
-            player.start();
-        } catch (Exception e) {
-            player = null;
-            try { tone = new ToneGenerator(AudioManager.STREAM_ALARM, 100); h.post(toneLoop); } catch (Exception ignored) { }
-        }
+        sp.start(sound, vol, true);
         try {
             long[] pat = {0, 700, 400};
             if (Build.VERSION.SDK_INT >= 26) vib.vibrate(VibrationEffect.createWaveform(pat, 0),
@@ -279,14 +268,6 @@ public class AlarmService extends Service {
             else vib.vibrate(pat, 0);
         } catch (Exception ignored) { }
     }
-
-    final Runnable toneLoop = new Runnable() {
-        @Override public void run() {
-            if (tone == null) return;
-            tone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 800);
-            h.postDelayed(this, 1000);
-        }
-    };
 
     void beepShort() {
         try {
@@ -297,11 +278,7 @@ public class AlarmService extends Service {
     }
 
     void stopSound() {
-        try { if (player != null) { player.stop(); player.release(); } } catch (Exception ignored) { }
-        player = null;
-        h.removeCallbacks(toneLoop);
-        try { if (tone != null) tone.release(); } catch (Exception ignored) { }
-        tone = null;
+        try { sp.stop(); } catch (Exception ignored) { }
         try { vib.cancel(); } catch (Exception ignored) { }
     }
 
