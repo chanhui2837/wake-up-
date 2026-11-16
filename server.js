@@ -22,7 +22,7 @@ const User = mongoose.model("User", new mongoose.Schema({
 }, { timestamps: true }));
 
 const MissionSchema = new mongoose.Schema({
-  type: { type: String, enum: ["math", "tiles", "order", "squat", "walk", "shake"], required: true },
+  type: { type: String, enum: ["math", "tiles", "order", "squat", "walk", "shake", "light"], required: true },
   count: { type: Number, min: 1, max: 500, default: 3 },
   level: { type: Number, min: 1, max: 4, default: 1 },
 }, { _id: false });

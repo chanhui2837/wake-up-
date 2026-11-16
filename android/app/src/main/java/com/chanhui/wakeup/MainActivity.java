@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     WebView web;
     boolean pageReady = false;
     ValueCallback<Uri[]> fileCb;
+    boolean jsLight = false;
     SoundPlayer previewPlayer;
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -89,6 +90,7 @@ public class MainActivity extends Activity {
         super.onNewIntent(i);
         String ev = i.getStringExtra("event");
         if ("ring".equals(ev)) callJs("ring", i.getStringExtra("alarmId"), i.getStringExtra("msg"));
+        else if ("check".equals(ev)) callJs("check", String.valueOf(i.getLongExtra("checkEnd", 0)), "");
     }
 
     @Override protected void onResume() {
@@ -109,10 +111,13 @@ public class MainActivity extends Activity {
         if (previewPlayer != null) previewPlayer.stop();
     }
 
-    @Override protected void onDestroy() { if (instance == this) instance = null; visible = false; super.onDestroy(); }
+    @Override protected void onDestroy() {
+        if (jsLight) { jsLight = false; LightMeter.stop(this); } if (instance == this) instance = null; visible = false; super.onDestroy(); }
 
     void updateKeepOn() {
-        if (Store.isLocked(this)) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        org.json.JSONObject gp = Store.pending(this);
+        boolean guard = gp.optDouble("guardThr", -1) > 0 && gp.optLong("guardUntil", 0) > System.currentTimeMillis();
+        if (Store.isLocked(this) || guard) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -188,11 +193,12 @@ public class MainActivity extends Activity {
             svc(AlarmService.ACTION_MISSION, null);
         }
 
-        @JavascriptInterface public void missionDone(long delayMs) {
+        @JavascriptInterface public void missionDone(long delayMs, int guardMin) {
             Intent i = new Intent();
             i.putExtra("delay", Math.max(5000, delayMs));
+            i.putExtra("guardMin", guardMin);
             svc(AlarmService.ACTION_WAIT, i);
-            runOnUiThread(() -> getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
+            if (guardMin <= 0) runOnUiThread(() -> getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
         }
 
         @JavascriptInterface public void saveSound(String id, String b64) {
@@ -220,6 +226,25 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void stopPreview() {
             runOnUiThread(() -> { if (previewPlayer != null) previewPlayer.stop(); });
+        }
+
+        /* 밝기: 화면 표시용 측정 + 서비스 감시 시작 */
+        @JavascriptInterface public void lightStart() {
+            if (!jsLight) { jsLight = true; LightMeter.start(MainActivity.this); }
+        }
+
+        @JavascriptInterface public void lightStop() {
+            if (jsLight) { jsLight = false; LightMeter.stop(MainActivity.this); }
+        }
+
+        @JavascriptInterface public float getLux() { return LightMeter.lux; }
+
+        @JavascriptInterface public void guardStart(float thr, String id) {
+            Intent i = new Intent();
+            i.putExtra("thr", thr);
+            i.putExtra("alarmId", id);
+            svc(AlarmService.ACTION_GUARD, i);
+            runOnUiThread(() -> getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
         }
 
         @JavascriptInterface public void checkYes() { svc(AlarmService.ACTION_YES, null); }

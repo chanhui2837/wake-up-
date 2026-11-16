@@ -11,7 +11,9 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context c, Intent intent) {
         Store.scheduleAll(c);
         String m = Store.mode(c);
-        if (m.equals("ring") || m.equals("mission") || m.equals("check") || m.equals("wait")) {
+        org.json.JSONObject p = Store.pending(c);
+        boolean guard = p.optDouble("guardThr", -1) > 0 && p.optLong("guardUntil", 0) > System.currentTimeMillis();
+        if (m.equals("ring") || m.equals("mission") || m.equals("check") || m.equals("wait") || guard) {
             Intent s = new Intent(c, AlarmService.class);
             s.setAction(AlarmService.ACTION_RING);
             s.putExtra("alarmId", Store.pending(c).optString("alarmId", ""));

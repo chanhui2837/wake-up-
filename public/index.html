@@ -210,6 +210,25 @@ button:active{transform:scale(.97)}
 .cdring{width:150px;height:150px;margin:20px auto;position:relative}
 .cdring b{position:absolute;inset:0;display:grid;place-items:center;font-size:56px;font-weight:900}
 .yes{width:250px;height:96px;font-size:30px;font-weight:900;border-radius:28px;background:linear-gradient(135deg,#5BF0B8,#2BC48A);color:#022a1c;box-shadow:0 20px 40px -12px #2BC48Aaa}
+/* 밝기 */
+.guard{margin-top:12px;padding:16px;border:1px solid #FFD36E55;background:linear-gradient(135deg,#FFD36E14,#FF8A4C10)}
+.guard .gt{display:flex;justify-content:space-between;align-items:center;font-weight:800}
+.guard .gt b{font-size:22px;font-variant-numeric:tabular-nums}
+.meter{height:12px;border-radius:7px;background:#ffffff14;position:relative;overflow:visible;margin:12px 0 6px}
+.meter i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,#FF5470,#FFD36E 60%,#5BF0B8);transition:width .3s}
+.meter u{position:absolute;top:-5px;bottom:-5px;width:3px;border-radius:2px;background:#fff;text-decoration:none;box-shadow:0 0 6px #fff}
+.bulb{width:120px;height:120px;margin:22px auto 4px;border-radius:50%;display:grid;place-items:center;font-size:62px;background:#ffffff0d;transition:.3s}
+.bulb.on{background:radial-gradient(circle,#FFF3B0,#FFD36E 45%,#FF8A4C55 70%,transparent 72%);box-shadow:0 0 60px #FFD36E88}
+.luxv{font-size:44px;font-weight:900;font-variant-numeric:tabular-nums}
+.palette.light button .ico{color:#FFD36E}
+.mi .badge.light{background:#FFD36E22;color:#FFD36E}
+.mchip.light{background:#FFD36E1c;color:#FFE29A}
+/* 큰 기상 확인 화면 */
+.bigcheck{width:100%;max-width:520px;min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:4vh}
+.bigcheck h2{font-size:clamp(30px,9vw,40px);font-weight:900;margin:10px 0 4px;letter-spacing:-1px}
+.bigyes{width:100%;flex:1;min-height:44vh;margin-top:18px;border-radius:40px;background:linear-gradient(160deg,#6BF5C2,#22B97F);color:#03281a;box-shadow:0 30px 60px -20px #22B97Fcc,inset 0 2px 0 #ffffff66;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.bigyes b{font-size:clamp(64px,22vw,110px);font-weight:900;line-height:1}
+.bigyes span{font-size:20px;font-weight:800;opacity:.8}
 .toast{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top));transform:translateX(-50%);background:#000c;border:1px solid var(--line);padding:11px 18px;border-radius:14px;z-index:300;font-size:14px;font-weight:600;display:none;white-space:nowrap}
 </style>
 </head>
@@ -253,6 +272,12 @@ button:active{transform:scale(.97)}
     <div class="note" id="syncState" style="margin-top:8px;position:relative;z-index:1"></div>
   </div>
 
+  <div class="glass guard" id="guardBar" style="display:none">
+    <div class="gt"><span>💡 밝기 유지 중</span><b id="gLeft">--:--</b></div>
+    <div class="meter"><i id="gFill" style="width:0%"></i><u id="gMark"></u></div>
+    <div class="note" id="gNote">불 켠 방에 폰 화면이 위를 보게 두세요. 어두워지면 알람이 다시 울려요.</div>
+  </div>
+
   <div class="glass arm" id="armCard">
     <span class="dot" id="armDot"></span>
     <div style="flex:1"><b id="armTxt" style="font-size:14px">알람 대기 꺼짐</b><div class="note" id="armNote"></div></div>
@@ -294,6 +319,8 @@ button:active{transform:scale(.97)}
   <div class="palette" id="palMind"></div>
   <div class="pal-h">🏃 몸 깨우기</div>
   <div class="palette body" id="palBody"></div>
+  <div class="pal-h">💡 방 밝기</div>
+  <div class="palette light" id="palLight"></div>
   <button class="btn" id="edDelete" style="width:100%;margin-top:26px;color:var(--red)">알람 삭제</button>
 </div></div>
 
@@ -340,6 +367,7 @@ const I={
   music:'<svg class="ico" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
   up:'<svg class="ico" viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg>',
   x:'<svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  light:'<svg class="ico" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>',
   plus:'<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
 };
 
@@ -352,8 +380,15 @@ const MISSIONS={
   squat:{name:"스쿼트",kind:"body",unit:"회",def:10,min:1,max:200},
   walk:{name:"걷기",kind:"body",unit:"보",def:50,min:10,max:3000},
   shake:{name:"폰 흔들기",kind:"body",unit:"회",def:30,min:5,max:500},
+  light:{name:"불 켜기",kind:"light",unit:"분 유지",def:10,min:1,max:60,levels:["스탠드 정도","방 불 켠 정도","밝은 방","아주 밝게 (창가·햇빛)"]},
 };
-function mDesc(m){const d=MISSIONS[m.type];return d.kind==="mind"?`${LV[(m.level||1)-1]} · ${m.count}${d.unit}`:`${m.count}${d.unit}`}
+const LIGHT_LUX=[30,80,150,400];   // 앱: 조도 센서 (lux)
+const LIGHT_CAM=[45,70,95,125];    // 웹: 카메라 밝기 (0~255)
+const CHECK_SEC=30;
+function mDesc(m){const d=MISSIONS[m.type];
+  if(d.kind==="light")return `${d.levels[(m.level||2)-1]} · ${m.count}${d.unit}`;
+  return d.kind==="mind"?`${LV[(m.level||1)-1]} · ${m.count}${d.unit}`:`${m.count}${d.unit}`}
+const kindCls=k=>k==="body"?"body":k==="light"?"light":"";
 
 /* ---------- 알람음 ---------- */
 const BUILTIN=[
@@ -456,10 +491,10 @@ function initUI(){
   ["auUser","auPass","auPass2"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter")go()}));
   $("userChip").onclick=()=>{$("acName").textContent=me;$("acct").classList.add("show")};
   $("acClose").onclick=()=>$("acct").classList.remove("show");
-  $("logoutBtn").onclick=()=>{if(!locked())logout()};
+  $("logoutBtn").onclick=()=>{if(locked()||guardBlock())return;logout()};
   $("wdBtn").onclick=()=>{$("wdBox").style.display="";$("wdBtn").style.display="none"};
   $("wdGo").onclick=async()=>{
-    if(locked())return;
+    if(locked()||guardBlock())return;
     try{await api("/api/me",{method:"DELETE",body:JSON.stringify({password:$("wdPass").value})});$("wdPass").value="";logout();toast("탈퇴가 완료됐어요")}
     catch(e){toast(e.message)}
   };
@@ -560,6 +595,77 @@ function renderArm(){
 async function askMotion(){try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function")await DeviceMotionEvent.requestPermission()}catch(e){}}
 
 /* ================================================================
+   밝기 측정 (앱: 조도 센서 / 웹: 전면 카메라)
+================================================================ */
+const Light={on:false,val:-1,stream:null,iv:null,err:null,
+  async start(){
+    if(this.on)return true;
+    if(NATIVE){try{NB.lightStart()}catch(e){}this.on=true;return true}
+    try{
+      this.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:160,height:120},audio:false});
+      const v=document.createElement("video");v.muted=true;v.playsInline=true;v.srcObject=this.stream;await v.play();
+      const c=document.createElement("canvas");c.width=32;c.height=24;const x=c.getContext("2d",{willReadFrequently:true});
+      this.iv=setInterval(()=>{try{x.drawImage(v,0,0,32,24);const d=x.getImageData(0,0,32,24).data;let sum=0;
+        for(let i=0;i<d.length;i+=4)sum+=.299*d[i]+.587*d[i+1]+.114*d[i+2];this.val=sum/(d.length/4)}catch(e){}},400);
+      this.on=true;this.err=null;return true;
+    }catch(e){this.err=e&&e.name;return false}
+  },
+  read(){if(NATIVE){try{return +NB.getLux()}catch(e){return -1}}return this.val},
+  stop(){if(!this.on)return;this.on=false;
+    if(NATIVE){try{NB.lightStop()}catch(e){}return}
+    clearInterval(this.iv);try{this.stream.getTracks().forEach(t=>t.stop())}catch(e){}this.stream=null;this.val=-1},
+  thr(level){return (NATIVE?LIGHT_LUX:LIGHT_CAM)[(level||2)-1]},
+  fmt(v){return v<0?"측정 중…":NATIVE?Math.round(v)+" lux":Math.round(v/2.55)+"%"},
+};
+async function measureNow(btn,m){
+  btn.disabled=true;btn.textContent="📏 재는 중…";
+  const was=Light.on,ok=await Light.start();
+  if(!ok){btn.disabled=false;btn.textContent="📏 지금 방 밝기 재 보기";toast("카메라를 허용해야 밝기를 잴 수 있어요");return}
+  await new Promise(r=>setTimeout(r,2000));
+  const v=Light.read(),thr=Light.thr(m.level);if(!was&&!G)Light.stop();
+  btn.disabled=false;btn.textContent=v===-2?"이 폰에는 조도 센서가 없어요":`📏 지금 ${Light.fmt(v)} · 기준 ${Light.fmt(thr)} ${v>=thr?"✅ 통과":"❌ 부족"}`;
+}
+
+/* ---------- 밝기 유지 감시 (guard) ----------
+   불 켜기 미션을 통과한 순간부터 알람이 꺼진 뒤 정한 시간까지 계속 감시.
+   기준의 60% 아래로 5초 넘게 떨어지면(미세한 변화는 봐줌) 다시 울리고 미션 처음부터.
+   앱에서는 안드로이드 서비스가 감시하므로 알람 삭제·로그아웃·앱 닫기와 상관없이 계속됨. */
+let G=LS.get("wa_guard",null);  // {alarmId,thr,mins,until,open}
+const saveG=()=>LS.set("wa_guard",G);
+const guardActive=()=>!!G&&Date.now()<G.until;
+let darkSince=0;
+function guardBegin(m){
+  G={alarmId:S.alarmId,thr:Light.thr(m.level),mins:m.count,until:Date.now()+2*3600e3,open:true};saveG();darkSince=0;
+  if(NATIVE){try{NB.guardStart(G.thr,S.alarmId||"")}catch(e){}}
+}
+function guardClear(){G=null;saveG();darkSince=0;if(!NATIVE)Light.stop();renderGuard()}
+function guardFail(){
+  const a=curAlarm()||alarms.find(x=>x.id===(G&&G.alarmId));
+  guardClear();cleanupMission();
+  S={mode:"ringing",alarmId:a?a.id:"",snap:a,failMsg:"💡 방이 어두워졌어요! 미션을 처음부터 다시 해야 해요."};showRinging();
+}
+function guardTick(){
+  if(!G)return;
+  if(Date.now()>=G.until){guardClear();toast("💡 밝기 유지 완료! 좋은 하루 보내세요");return}
+  const v=Light.read();
+  if(!NATIVE){
+    if(!Light.on)Light.start();
+    if(v>=0&&v<G.thr*0.6){if(!darkSince)darkSince=Date.now();else if(Date.now()-darkSince>5000){guardFail();return}}
+    else darkSince=0;
+  }
+  renderGuard(v);
+}
+function renderGuard(v){
+  const bar=$("guardBar");if(!bar)return;
+  const show=!!G&&!G.open&&!locked();bar.style.display=show?"":"none";if(!show)return;
+  const left=Math.max(0,Math.ceil((G.until-Date.now())/1000));$("gLeft").textContent=`${Math.floor(left/60)}:${pad2(left%60)}`;
+  const top=G.thr*2.2;$("gFill").style.width=Math.min(100,Math.max(0,(v||0)/top*100))+"%";$("gMark").style.left=(G.thr/top*100)+"%";
+  const dark=v>=0&&v<G.thr*0.6;
+  $("gNote").textContent=(v>=0?`현재 ${Light.fmt(v)} · 기준 ${Light.fmt(G.thr)} — `:"")+(dark?"⚠️ 너무 어두워요! 5초 안에 밝게 하세요":"불 켠 방에 폰 화면이 위를 보게 두세요. 어두워지면 다시 울려요.");
+}
+const guardBlock=()=>{if(guardActive()){toast(`💡 밝기 유지가 끝날 때까지 못 바꿔요 (${Math.ceil((G.until-Date.now())/60000)}분 남음)`);return true}return false};
+
+/* ================================================================
    알람 목록
 ================================================================ */
 const DAYN=["일","월","화","수","목","금","토"];
@@ -583,7 +689,7 @@ function renderList(){
        <div class="lbl">${esc(a.label)||"알람"} <span class="sub" style="font-weight:600">· 제한 ${fmtSec(a.limit)}</span></div>
        <div class="dayrow">${a.days.length?DAYN.map((d,i)=>`<i class="${a.days.includes(i)?"on":""}">${d}</i>`).join(""):'<span class="note">한 번만</span>'}</div>
      </div><button class="sw ${a.on?"on":""}" data-tog="${a.id}" aria-label="켜기/끄기"></button></div>
-     <div class="mchips">${a.missions.map(m=>`<span class="mchip ${MISSIONS[m.type].kind==="body"?"body":""}">${I[m.type]}${MISSIONS[m.type].name} ${mDesc(m)}</span>`).join("")}
+     <div class="mchips">${a.missions.map(m=>`<span class="mchip ${kindCls(MISSIONS[m.type].kind)}">${I[m.type]}${MISSIONS[m.type].name} ${mDesc(m)}</span>`).join("")}
        <span class="mchip snd">${I.music}${esc(soundName(a.sound||"system"))} · ${a.volume||80}%</span></div>
      <div class="acts"><button data-edit="${a.id}">${I.edit}편집</button><button data-test="${a.id}">${I.bell}지금 울려보기</button></div>
    </div>`}).join("");
@@ -592,6 +698,7 @@ const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const fmtSec=s=>s>=60?(Math.floor(s/60)+"분"+(s%60?" "+s%60+"초":"")):s+"초";
 $("list").onclick=e=>{
   const t=e.target.closest("button");if(!t)return;
+  if((t.dataset.tog||t.dataset.edit||t.dataset.test)&&guardBlock())return;
   if(t.dataset.tog){const a=alarms.find(x=>x.id===t.dataset.tog);a.on=!a.on;a.lastFired=null;saveA();renderList();if(a.on){const n=nextTime(a);n&&toast(`${Math.floor((n-Date.now())/3600000)}시간 ${Math.floor((n-Date.now())%3600000/60000)}분 후에 울려요`)}}
   if(t.dataset.edit)openEditor(alarms.find(x=>x.id===t.dataset.edit));
   if(t.dataset.test){unlockAudio();askMotion();const a=alarms.find(x=>x.id===t.dataset.test);
@@ -621,21 +728,28 @@ function renderEd(){
      <button class="ib" data-prev="${s.id}">${I.play}</button>${s.b?"":`<button class="ib" data-sdel="${s.id}">${I.trash}</button>`}</div>`).join("")
     +`<button class="srow add" id="sndAdd">${I.plus} MP3 파일로 알람음 추가</button>`;
   $("edMissions").innerHTML=ed.missions.length?ed.missions.map((m,i)=>{const d=MISSIONS[m.type];return `
-    <div class="mi"><div class="badge ${d.kind==="body"?"body":""}">${I[m.type]}</div>
-      <div class="nm">${d.name}<small>${d.kind==="mind"?"정신 깨우기":"몸 깨우기"}${d.kind==="mind"?" · "+d.levels[(m.level||1)-1]:""}</small></div>
+    <div class="mi"><div class="badge ${kindCls(d.kind)}">${I[m.type]}</div>
+      <div class="nm">${d.name}<small>${d.kind==="mind"?"정신 깨우기 · "+d.levels[(m.level||1)-1]:d.kind==="light"?"이 밝기를 "+m.count+"분 동안 유지해야 해요":"몸 깨우기"}</small></div>
       <button class="x" data-up="${i}" title="위로">${I.up}</button><button class="x" data-del="${i}" title="삭제">${I.x}</button>
-      <div class="ctl">${d.kind==="mind"?`<select data-lv="${i}">${LV.map((l,k)=>`<option value="${k+1}" ${(m.level||1)===k+1?"selected":""}>${l} · ${d.levels[k]}</option>`).join("")}</select>`:'<div style="flex:1;font-size:12.5px;color:var(--sub)">목표 횟수</div>'}
-        <div class="step"><button data-dec="${i}">−</button><input type="number" inputmode="numeric" data-cnt="${i}" value="${m.count}"><span>${d.unit}</span><button data-inc="${i}">+</button></div></div>
+      <div class="ctl">${d.kind==="mind"?`<select data-lv="${i}">${LV.map((l,k)=>`<option value="${k+1}" ${(m.level||1)===k+1?"selected":""}>${l} · ${d.levels[k]}</option>`).join("")}</select>`
+        :d.kind==="light"?`<select data-lv="${i}">${d.levels.map((l,k)=>`<option value="${k+1}" ${(m.level||2)===k+1?"selected":""}>${l}${NATIVE?" ("+LIGHT_LUX[k]+" lux)":""}</option>`).join("")}</select>`
+        :'<div style="flex:1;font-size:12.5px;color:var(--sub)">목표 횟수</div>'}
+        <div class="step"><button data-dec="${i}">−</button><input type="number" inputmode="numeric" data-cnt="${i}" value="${m.count}"><span>${d.unit}</span><button data-inc="${i}">+</button></div>
+      </div>
+      ${d.kind==="light"?`<div class="ctl"><button class="btn sm" data-meas="${i}" style="flex:1">📏 지금 방 밝기 재 보기</button></div>`:""}
     </div>`}).join(""):'<div class="note" style="padding:6px 2px">아래에서 미션을 1개 이상 골라 주세요.</div>';
   const pal=k=>Object.entries(MISSIONS).filter(([,d])=>d.kind===k).map(([t,d])=>`<button data-add="${t}">${I[t]}${d.name}</button>`).join("");
-  $("palMind").innerHTML=pal("mind");$("palBody").innerHTML=pal("body");
+  $("palMind").innerHTML=pal("mind");$("palBody").innerHTML=pal("body");$("palLight").innerHTML=pal("light");
 }
 function stepVal(m,v){const d=MISSIONS[m.type];m.count=Math.max(d.min,Math.min(d.max,Math.round(v)||d.def))}
 $("editor").addEventListener("click",async e=>{
   const t=e.target.closest("button,.srow");if(!t)return;
   if(t.dataset.day!==undefined){const d=+t.dataset.day;ed.days=ed.days.includes(d)?ed.days.filter(x=>x!==d):[...ed.days,d];renderEd()}
   else if(t.dataset.lim){ed.limit=+t.dataset.lim;renderEd()}
-  else if(t.dataset.add){const d=MISSIONS[t.dataset.add];ed.missions.push({type:t.dataset.add,count:d.def,level:1});renderEd();toast(d.name+" 추가됨")}
+  else if(t.dataset.add){const d=MISSIONS[t.dataset.add];
+    if(t.dataset.add==="light"&&ed.missions.some(x=>x.type==="light")){toast("불 켜기 미션은 1개만 넣을 수 있어요");return}
+    ed.missions.push({type:t.dataset.add,count:d.def,level:d.kind==="light"?2:1});renderEd();toast(d.name+" 추가됨")}
+  else if(t.dataset.meas!==undefined){measureNow(t,ed.missions[+t.dataset.meas])}
   else if(t.dataset.del!==undefined){ed.missions.splice(+t.dataset.del,1);renderEd()}
   else if(t.dataset.up!==undefined){const i=+t.dataset.up;if(i>0){[ed.missions[i-1],ed.missions[i]]=[ed.missions[i],ed.missions[i-1]];renderEd()}}
   else if(t.dataset.dec!==undefined){const m=ed.missions[+t.dataset.dec],st=m.type==="walk"?10:1;stepVal(m,m.count-st);renderEd()}
@@ -653,7 +767,7 @@ $("editor").addEventListener("change",e=>{
 $("edVol").oninput=e=>{ed.volume=+e.target.value;$("edVolV").textContent=ed.volume+"%"};
 $("edVolTest").onclick=()=>preview(ed.sound,ed.volume,null);
 $("edCancel").onclick=()=>{stopPreview();$("editor").classList.remove("show")};
-$("edDelete").onclick=()=>{alarms=alarms.filter(a=>a.id!==ed.id);saveA();renderList();$("editor").classList.remove("show");toast("알람 삭제됨")};
+$("edDelete").onclick=()=>{if(guardBlock())return;alarms=alarms.filter(a=>a.id!==ed.id);saveA();renderList();$("editor").classList.remove("show");toast("알람 삭제됨")};
 $("edSave").onclick=()=>{
   if(!ed.missions.length){toast("미션을 1개 이상 넣어 주세요");return}
   stopPreview();
@@ -662,7 +776,7 @@ $("edSave").onclick=()=>{
   saveA();renderList();$("editor").classList.remove("show");
   const n=nextTime(ed);toast(n?`${Math.floor((n-Date.now())/3600000)}시간 ${Math.floor((n-Date.now())%3600000/60000)}분 후에 울려요`:"저장됨");
 };
-$("addBtn").onclick=()=>openEditor(null);
+$("addBtn").onclick=()=>{if(locked())return;openEditor(null)};
 
 /* ---------- MP3 올리기 / 삭제 ---------- */
 $("sndFile").onchange=async e=>{
@@ -703,6 +817,7 @@ function tick(){
   if(S.mode==="mission")missionTick();
   if(S.mode==="waitcheck"&&!NATIVE&&Date.now()>=S.checkAt)startCheck();
   if(S.mode==="checking")checkTick();
+  if(G)guardTick();
 }
 const curAlarm=()=>alarms.find(a=>a.id===S.alarmId)||S.snap;
 
@@ -714,7 +829,7 @@ const locked=()=>["ringing","mission","checking"].includes(S.mode);
 function lockOn(calm){lock.classList.add("show");lock.classList.toggle("calm",!!calm);document.body.style.overflow="hidden";
   try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}}
 function lockOff(){lock.classList.remove("show");lock.innerHTML="";document.body.style.overflow="";try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}renderList()}
-window.addEventListener("beforeunload",e=>{if(locked()){e.preventDefault();e.returnValue="알람을 끄기 전에는 나갈 수 없어요!";return e.returnValue}});
+window.addEventListener("beforeunload",e=>{if(locked()||guardActive()){e.preventDefault();e.returnValue="알람을 끄기 전에는 나갈 수 없어요!";return e.returnValue}});
 history.pushState({trap:1},"");window.addEventListener("popstate",()=>{history.pushState({trap:1},"");if(locked())toast("미션을 끝내기 전에는 나갈 수 없어요!")});
 document.addEventListener("keydown",e=>{if(locked()&&(e.key==="Escape"||e.key==="F5"||(e.ctrlKey&&["w","r"].includes(e.key.toLowerCase())))){e.preventDefault();toast("미션을 끝내야 꺼져요!")}},true);
 document.addEventListener("contextmenu",e=>{if(locked())e.preventDefault()});
@@ -730,6 +845,7 @@ function fire(a){
   try{if("Notification" in window&&Notification.permission==="granted")new Notification("⏰ "+(a.label||"깨워알람"),{body:"미션을 해야 알람이 꺼져요!",requireInteraction:true})}catch(e){}
 }
 function showRinging(){
+  if(G){G=null;saveG();darkSince=0;if(!NATIVE)Light.stop()}
   S.mode="ringing";saveS();cleanupMission();lockOn();startRing();
   const a=curAlarm()||{missions:[],limit:120},now=new Date();
   lock.innerHTML=`
@@ -774,29 +890,32 @@ function runMission(){
 }
 function allDone(){
   cleanupMission();
-  const mins=1+Math.random()*4; // 1~5분 사이 랜덤
+  const mins=1+Math.random()*14; // 알람이 꺼진 뒤 1~15분 사이 랜덤
   S.mode="waitcheck";S.checkAt=Date.now()+Math.round(mins*60000);saveS();
-  if(NATIVE){try{NB.missionDone(Math.round(mins*60000))}catch(e){}}else stopRing();
-  lock.innerHTML=`<div class="check"><img src="logo.svg" style="width:96px;border-radius:28px" alt=""><h2>미션 성공!</h2><div class="hint">좋은 아침이에요 🌞<br>잠시 후 정말 깼는지 한 번 더 물어볼게요.</div></div>`;
-  setTimeout(()=>{if(S.mode==="waitcheck")lockOff()},2600);
+  const gMin=G?G.mins:0;
+  if(G){G.until=Date.now()+gMin*60000;G.open=false;saveG();if(!NATIVE)getWakeLock()}
+  if(NATIVE){try{NB.missionDone(Math.round(mins*60000),gMin)}catch(e){}}else stopRing();
+  lock.innerHTML=`<div class="check"><img src="logo.svg" style="width:96px;border-radius:28px" alt=""><h2>미션 성공!</h2><div class="hint">좋은 아침이에요 🌞<br>잠시 후 정말 깼는지 한 번 더 물어볼게요.${gMin?`<br><br><b style="color:#FFD36E">💡 앞으로 ${gMin}분 동안 불을 켜 두세요.</b><br>어두워지면 알람이 다시 울리고 미션도 처음부터예요.`:""}</div></div>`;
+  setTimeout(()=>{if(S.mode==="waitcheck")lockOff()},gMin?5000:2600);
 }
 
 /* ---------- 완전히 깨어났나요? ---------- */
 function startCheck(endAt){
-  S.mode="checking";S.checkEnd=endAt||Date.now()+10000;saveS();lockOn(true);
-  if(!NATIVE){for(let i=0;i<3;i++)setTimeout(chime,i*400);try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
-    try{if("Notification" in window&&Notification.permission==="granted")new Notification("완전히 깨어났나요?",{body:"10초 안에 '예'를 누르지 않으면 알람이 다시 울려요!",requireInteraction:true})}catch(e){}}
-  lock.innerHTML=`<div class="check"><div style="font-size:54px">🤔</div><h2>완전히 깨어났나요?</h2><div class="hint">10초 안에 누르지 않으면 알람이 다시 울려요</div>
-    <div class="cdring"><svg viewBox="0 0 100 100" width="150" height="150" style="transform:rotate(-90deg)"><circle cx="50" cy="50" r="44" stroke="#ffffff1a" stroke-width="8" fill="none"/><circle id="cdArc" cx="50" cy="50" r="44" stroke="url(#gg)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/><defs><linearGradient id="gg"><stop offset="0" stop-color="#FFD36E"/><stop offset="1" stop-color="#FF4D8D"/></linearGradient></defs></svg><b id="cd">10</b></div>
-    <button class="yes" id="yesBtn">예, 깼어요!</button></div>`;
+  S.mode="checking";S.checkEnd=endAt||Date.now()+CHECK_SEC*1000;saveS();lockOn(true);
+  if(!NATIVE){for(let i=0;i<3;i++)setTimeout(chime,i*400);try{navigator.vibrate&&navigator.vibrate([400,150,400,150,400])}catch(e){}
+    try{if("Notification" in window&&Notification.permission==="granted")new Notification("완전히 깨어났나요?",{body:CHECK_SEC+"초 안에 '예'를 누르지 않으면 알람이 다시 울려요!",requireInteraction:true})}catch(e){}}
+  lock.innerHTML=`<div class="bigcheck">
+    <div class="cdring" style="width:120px;height:120px;margin:0"><svg viewBox="0 0 100 100" width="120" height="120" style="transform:rotate(-90deg)"><circle cx="50" cy="50" r="44" stroke="#ffffff1a" stroke-width="8" fill="none"/><circle id="cdArc" cx="50" cy="50" r="44" stroke="url(#gg)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/><defs><linearGradient id="gg"><stop offset="0" stop-color="#FFD36E"/><stop offset="1" stop-color="#FF4D8D"/></linearGradient></defs></svg><b id="cd" style="font-size:44px">${CHECK_SEC}</b></div>
+    <h2>완전히 깨어났나요?</h2><div class="hint">${CHECK_SEC}초 안에 아래 버튼을 누르세요. 안 누르면 다시 울려요.</div>
+    <button class="bigyes" id="yesBtn"><b>예!</b><span>깼어요</span></button></div>`;
   $("yesBtn").onclick=()=>{if(NATIVE){try{NB.checkYes()}catch(e){}}checkOk()};
   checkTick();
 }
-function checkOk(){okSound();S={mode:"idle"};saveS();lockOff();toast("오늘 하루도 화이팅! ☀️")}
+function checkOk(){okSound();S={mode:"idle"};saveS();lockOff();toast(guardActive()?"좋아요! 밝기 유지는 계속돼요 💡":"오늘 하루도 화이팅! ☀️")}
 function checkTick(){
   const left=Math.max(0,Math.ceil((S.checkEnd-Date.now())/1000));const c=$("cd");if(c)c.textContent=left;
-  const arc=$("cdArc");if(arc)arc.style.strokeDashoffset=276.5*(1-left/10);
-  if(left>0&&!NATIVE){unlockAudio();tone(1000,.06,.25,"sine")}
+  const arc=$("cdArc");if(arc)arc.style.strokeDashoffset=276.5*(1-left/CHECK_SEC);
+  if(left>0&&!NATIVE&&left<=10){unlockAudio();tone(1000,.06,.25,"sine")}
   if(left<=0&&!NATIVE){S.failMsg="😴 확인을 안 눌렀어요! 다시 미션 시작!";showRinging()}
 }
 
@@ -812,6 +931,7 @@ window.onNative=function(ev,a,b){
   }else if(ev==="check")startCheck(Number(a)||Date.now()+10000);
   else if(ev==="checkok"){if(S.mode==="checking"||S.mode==="waitcheck")checkOk()}
   else if(ev==="perm")renderNative();
+  else if(ev==="guardend"){if(G){G=null;saveG();renderGuard();toast("💡 밝기 유지 완료! 좋은 하루 보내세요")}}
 };
 
 /* ================================================================
@@ -901,6 +1021,32 @@ RUNNERS.squat=(box,m,d,next)=>sensorMission(box,m,d,next,{type:"squat",lo:1.6,up
 RUNNERS.walk=(box,m,d,next)=>sensorMission(box,m,d,next,{type:"walk",lo:.9,up:1.1,gap:300,hint:"폰을 손에 들고 걸어 다니세요.<br>제자리걸음보다 실제로 걷는 게 정확해요."});
 RUNNERS.shake=(box,m,d,next)=>sensorMission(box,m,d,next,{type:"shake",hi:22,gap:220,hint:"폰을 꽉 쥐고 세게 흔드세요!"});
 
+RUNNERS.light=(box,m,d,next)=>{
+  const thr=Light.thr(m.level);let okSince=0,iv=null,dead=false;
+  box.innerHTML=`<div class="mtitle">${I.light}불 켜기</div>
+    <div class="bulb" id="lb">💡</div><div class="luxv" id="lv">측정 중…</div>
+    <div class="meter" style="max-width:360px;margin:16px auto 6px"><i id="lf" style="width:0%"></i><u id="lm"></u></div>
+    <div class="hint">기준: <b>${d.levels[(m.level||2)-1]}</b> (${Light.fmt(thr)})<br>방 불을 켜고 폰 화면이 위(천장)를 보게 들어 주세요.<br>통과하면 알람이 꺼진 뒤 <b>${m.count}분 동안</b> 밝기를 유지해야 해요.</div><div id="lerr"></div>`;
+  const top=thr*2.2;$("lm").style.left=(thr/top*100)+"%";
+  Light.start().then(ok=>{
+    if(dead)return;
+    if(!ok){
+      if(Light.err==="NotFoundError"||!navigator.mediaDevices){$("lerr").innerHTML='<div class="note" style="margin-top:14px">이 기기에는 카메라가 없어 밝기를 잴 수 없어요. 이 미션은 건너뛸게요.</div>';setTimeout(()=>{if(!dead){dead=true;next()}},2500);return}
+      $("lerr").innerHTML='<button class="btn pri" id="lretry" style="margin-top:16px;width:100%">📷 카메라 허용하고 다시 재기</button><div class="note" style="margin-top:8px">웹에서는 전면 카메라로 밝기를 재요. 앱은 조도 센서를 써요.</div>';
+      $("lretry").onclick=()=>{dead=true;cleanupFn=RUNNERS.light(box,m,d,next)};return;
+    }
+    iv=setInterval(()=>{
+      if(dead)return clearInterval(iv);
+      const v=Light.read();
+      if(v===-2){clearInterval(iv);$("lerr").innerHTML='<div class="note" style="margin-top:14px">이 폰에는 조도 센서가 없어요. 이 미션은 건너뛸게요.</div>';setTimeout(()=>{if(!dead){dead=true;next()}},2500);return}
+      $("lv").textContent=Light.fmt(v);$("lf").style.width=Math.min(100,Math.max(0,v/top*100))+"%";
+      const bright=v>=thr;$("lb").classList.toggle("on",bright);
+      if(bright){if(!okSince)okSince=Date.now();else if(Date.now()-okSince>2000){clearInterval(iv);dead=true;guardBegin(m);next()}}else okSince=0;
+    },300);
+  });
+  return()=>{dead=true;clearInterval(iv);if(!G)Light.stop()};
+};
+
 /* ================================================================
    시작
 ================================================================ */
@@ -910,12 +1056,14 @@ function restore(){
   showMain();
   if(NATIVE){
     let p={};try{p=JSON.parse(NB.getPending()||"{}")}catch(e){}
+    if(p.guardThr>0&&p.guardUntil>Date.now()){G={alarmId:p.alarmId,thr:p.guardThr,until:p.guardUntil,mins:0,open:p.mode==="mission"};saveG()}else if(G){G=null;saveG()}
     if(p.mode==="ring"||p.mode==="mission"){S.mode="idle";window.onNative("ring",p.alarmId,p.mode==="mission"?"🔁 앱을 나갔다 왔네요. 처음부터 다시!":(p.msg||""))}
     else if(p.mode==="check")startCheck(p.checkEnd);
     else if(p.mode==="wait"){S.mode="waitcheck";saveS()}
     else if(S.mode!=="idle"){S={mode:"idle"};saveS()}
     return;
   }
+  if(guardActive()&&!locked()){S={mode:"ringing",alarmId:G.alarmId,snap:alarms.find(x=>x.id===G.alarmId),failMsg:""};saveS()}
   if(locked()){
     S.failMsg="🔁 화면을 나갔다 왔네요. 처음부터 다시!";S.mode="ringing";saveS();
     lockOn();lock.innerHTML=`<div class="check"><h2>알람이 아직 안 꺼졌어요</h2><button class="startbtn" id="resume" style="animation:none">눌러서<br>계속</button></div>`;
